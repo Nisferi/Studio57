@@ -114,6 +114,11 @@ export const LOCALES = {
     go_score: 'NIGHTS SURVIVED',
     go_restart: 'TRY AGAIN',
 
+    // Tutorial
+    tutorial_age:  '👁 CHECK AGE in the ID card — minors = fine + FBI trouble!',
+    tutorial_btn:  '✓ APPROVE guests or ✗ DENY them. Trashy = rep hit. VIP = big cash.',
+    tutorial_hide: '💰 HIDE MONEY into the stash — avoids 30% tax. But FBI grows!',
+
     // Misc
     ok: 'OK',
     back: 'BACK',
@@ -236,6 +241,11 @@ export const LOCALES = {
     go_bank_text: 'У ВАС КОНЧИЛИСЬ ДЕНЬГИ',
     go_score: 'НОЧЕЙ ПЕРЕЖИТО',
     go_restart: 'НАЧАТЬ ЗАНОВО',
+
+    // Tutorial
+    tutorial_age:  '👁 ПРОВЕРЯЙ ВОЗРАСТ в ID — за несовершеннолетних штраф + ФБР!',
+    tutorial_btn:  '✓ ВПУСТИТЬ гостя или ✗ ОТКАЗАТЬ. Паршивый = репутация –. VIP = бонус.',
+    tutorial_hide: '💰 ПРЯЧЬ ДЕНЬГИ в тайник — обходишь налог 30%. Но ФБР растёт!',
 
     // Misc
     ok: 'OK',

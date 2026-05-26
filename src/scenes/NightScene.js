@@ -22,18 +22,21 @@ export class NightScene extends Phaser.Scene {
   constructor() { super({ key: 'Night' }); }
 
   init() {
-    this.velvetBox     = 0;
-    this.fines         = 0;
-    this.timeLeft      = NIGHT_DURATION;
-    this.guestQueue    = [];
-    this.currentGuest  = null;
-    this.deciding      = false;
-    this.barMultiplier = 1 + (GameState.upgrades.bar * 0.5);
-    this.fightChance   = Math.max(0.05, 0.5 - GameState.upgrades.security * 0.15);
-    this.slyInClub     = false;  // Sly Steel reduces fights
-    this.barBoost      = 1;      // Lisa Monelli effect
-    this.nightEvents   = [];
-    this.eventPending  = false;
+    this.velvetBox        = 0;
+    this.fines            = 0;
+    this.timeLeft         = NIGHT_DURATION;
+    this.guestQueue       = [];
+    this.currentGuest     = null;
+    this.deciding         = false;
+    this.barMultiplier    = 1 + (GameState.upgrades.bar * 0.5);
+    this.fightChance      = Math.max(0.05, 0.5 - GameState.upgrades.security * 0.15);
+    this.slyInClub        = false;  // Sly Steel: no fights
+    this.barBoost         = 1;      // Lisa Monelli / Mini Michael
+    this.ticketMultiplier = 1;      // Donald Trumpet: 3× tickets
+    this.celebTimers      = [];     // periodic celeb effect timers
+    this.nightEvents      = [];
+    this.eventPending     = false;
+    this.tutorialStep     = 0;
   }
 
   create() {
@@ -61,6 +64,11 @@ export class NightScene extends Phaser.Scene {
     this.clockEvent = this.time.addEvent({ delay: 1000, callback: this.onTick, callbackScope: this, loop: true });
     this.barEvent   = this.time.addEvent({ delay: BAR_TICK_MS, callback: this.onBarTick, callbackScope: this, loop: true });
     this.scheduleNextGuest();
+
+    // Tutorial overlay for first night
+    if (GameState.nightNumber === 1 && !GameState.flags.tutorialDone) {
+      this.buildTutorial(W, H);
+    }
   }
 
   // ─── BACKGROUND ────────────────────────────────────────────────────────────
@@ -516,6 +524,59 @@ export class NightScene extends Phaser.Scene {
     g.strokePath();
   }
 
+  // ─── TUTORIAL ────────────────────────────────────────────────────────────────
+
+  buildTutorial(W, H) {
+    const L = LOCALES[GameState.lang];
+    const steps = [
+      { text: L.tutorial_age  || '👁 CHECK the guest\'s AGE in the ID card!',   y: H * 0.51 },
+      { text: L.tutorial_btn  || '✓ APPROVE or ✗ REJECT guests',                 y: H * 0.77 },
+      { text: L.tutorial_hide || '💰 HIDE MONEY to stash cash from the taxman!', y: H * 0.88 },
+    ];
+
+    this.tutorialBg  = this.add.rectangle(W / 2, 0, W * 0.94, 36, 0x000000, 0.85)
+      .setStrokeStyle(1, 0xffd700).setDepth(90).setOrigin(0.5, 0).setVisible(false);
+    this.tutorialTxt = this.add.text(W / 2, 8, '', {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '7px', color: '#ffd700',
+      wordWrap: { width: W * 0.88 }, align: 'center',
+    }).setOrigin(0.5, 0).setDepth(91).setVisible(false);
+
+    const nextBtn = this.add.text(W - 8, 22, 'NEXT ▶', {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '7px', color: '#ffffff',
+      backgroundColor: '#333333',
+      padding: { x: 6, y: 3 },
+    }).setOrigin(1, 0.5).setDepth(92).setInteractive().setVisible(false);
+    nextBtn.on('pointerdown', () => this.advanceTutorial(steps, nextBtn));
+
+    this.tutorialNextBtn = nextBtn;
+    this.tutorialSteps   = steps;
+    this.advanceTutorial(steps, nextBtn);
+  }
+
+  advanceTutorial(steps, nextBtn) {
+    const i = this.tutorialStep;
+    if (i >= steps.length) {
+      this.tutorialBg.setVisible(false);
+      this.tutorialTxt.setVisible(false);
+      nextBtn.setVisible(false);
+      GameState.flags.tutorialDone = true;
+      return;
+    }
+    const { text } = steps[i];
+    this.tutorialBg.setVisible(true).setY(steps[i].y - 20);
+    this.tutorialTxt.setVisible(true).setText(text).setY(steps[i].y - 16);
+    nextBtn.setVisible(true).setY(steps[i].y - 8);
+    this.tutorialStep++;
+
+    // Auto-advance after 6 sec if player doesn't click
+    if (this.tutorialAutoTimer) this.tutorialAutoTimer.remove();
+    this.tutorialAutoTimer = this.time.delayedCall(6000, () => {
+      this.advanceTutorial(steps, nextBtn);
+    });
+  }
+
   // ─── GUEST SPAWNING ─────────────────────────────────────────────────────────
 
   scheduleNextGuest() {
@@ -594,14 +655,15 @@ export class NightScene extends Phaser.Scene {
     const minAge = GameState.nightNumber >= 4 ? 21 : 18;
 
     if (approve) {
+      AudioSystem.playStamp(true);
       this.showStamp(L.stamp_in, true);
-      this.velvetBox += guest.ticketRevenue;
+      this.velvetBox += Math.round(guest.ticketRevenue * this.ticketMultiplier);
       GameState.nightStats.approved++;
       this.processEntry(guest, minAge, L);
     } else {
+      AudioSystem.playStamp(false);
       this.showStamp(L.stamp_out, false);
       GameState.nightStats.rejected++;
-      // Missed celebrity = reputation hit
       if (guest.isCelebrity) {
         GameState.reputation = Math.max(0, GameState.reputation - 5);
       }
@@ -654,12 +716,44 @@ export class NightScene extends Phaser.Scene {
       this.velvetBox += celeb.entryBonus;
       this.showEvent(L.ev_celeb_in, `+$${celeb.entryBonus}`, '#ffd700');
 
-      if (!GameState.flags.firstCelebSeen) {
-        GameState.flags.firstCelebSeen = true;
+      if (!GameState.flags.firstCelebSeen) GameState.flags.firstCelebSeen = true;
+
+      switch (celeb.effect) {
+        case 'no_fights':
+          this.slyInClub = true;
+          break;
+        case 'bar_boost':
+          this.barBoost = celeb.effectValue;       // Lisa: ×2.5 bar income
+          break;
+        case 'full_dance_floor':
+          this.barBoost = Math.max(this.barBoost, celeb.effectValue); // Mini Michael: ×1.5
+          break;
+        case 'big_ticket':
+          this.ticketMultiplier = 3;               // Trumpet: 3× all tickets
+          this.showEvent('TRUMP EFFECT', '3× TICKETS!', '#f0f0f0');
+          break;
+        case 'fan_rush': {
+          // Swagger: instantly add guests to queue
+          const n = celeb.effectValue;
+          for (let i = 0; i < n; i++) this.guestQueue.push(generateGuest(GameState.nightNumber));
+          if (!this.currentGuest && !this.deciding) this.showNextGuest();
+          this.showEvent('FAN RUSH!', `+${n} guests`, '#ff6030');
+          break;
+        }
+        case 'hype_boost': {
+          // Warholder: +2 reputation every 10 sec while in club
+          const timer = this.time.addEvent({
+            delay: 10000,
+            callback: () => {
+              GameState.reputation = Math.min(100, GameState.reputation + celeb.effectValue);
+              this.floatText(this.W / 2, this.H * 0.35, `WARHOL REP +${celeb.effectValue}`, '#e8e8e8', 900);
+            },
+            loop: true,
+          });
+          this.celebTimers.push(timer);
+          break;
+        }
       }
-      if (celeb.effect === 'no_fights')     this.slyInClub = true;
-      if (celeb.effect === 'bar_boost')     this.barBoost  = celeb.effectValue;
-      if (celeb.effect === 'hype_boost')    GameState.reputation = Math.min(100, GameState.reputation + 15);
     }
 
     // Random macro event
@@ -680,8 +774,17 @@ export class NightScene extends Phaser.Scene {
 
   fireEvent(ev, L) {
     this.eventPending = true;
-    this.scene.launch('EventPopup', { event: ev, onClose: () => {
+    // Sync local velvetBox into GameState so event resolve() can read/modify it
+    GameState.velvetBox = this.velvetBox;
+    this.scene.launch('EventPopup', { event: ev, onClose: (result) => {
+      // Pull changes back from event
+      this.velvetBox = GameState.velvetBox;
       this.eventPending = false;
+      this.updateHUD(L);
+      if (result?.msg) {
+        const color = result.ok !== false ? '#40ff80' : '#ff4040';
+        this.floatText(this.W / 2, this.H * 0.45, result.msg, color, 2000);
+      }
     }});
   }
 
@@ -691,11 +794,18 @@ export class NightScene extends Phaser.Scene {
       this.floatText(this.W / 2, this.H * 0.70, 'NOT ENOUGH!', '#ff4040');
       return;
     }
-    this.velvetBox          -= 200;
-    GameState.stash         += 200;
-    GameState.fbiSuspicion   = Math.min(100, GameState.fbiSuspicion + 12);
+    this.velvetBox         -= 200;
+    GameState.stash        += 200;
+    GameState.fbiSuspicion  = Math.min(100, GameState.fbiSuspicion + 12);
+    AudioSystem.playCoins();
     this.updateHUD(L);
     this.floatText(this.W / 2, this.H * 0.70, '-$200 → STASH', '#ff8800');
+
+    // Advance tutorial step 2 if active
+    if (this.tutorialStep === 3 && this.tutorialSteps) {
+      if (this.tutorialAutoTimer) this.tutorialAutoTimer.remove();
+      this.advanceTutorial(this.tutorialSteps, this.tutorialNextBtn);
+    }
   }
 
   showStamp(text, approve) {
@@ -757,6 +867,7 @@ export class NightScene extends Phaser.Scene {
     const barLevel = Math.max(1, GameState.upgrades.bar + 1);
     const income   = Math.round(25 * barLevel * this.barBoost);
     this.velvetBox += income;
+    AudioSystem.playCoins();
     this.floatText(this.W * 0.75, this.H * 0.55, `BAR +$${income}`, '#40ff80', 1000);
     this.updateHUD();
   }
@@ -767,10 +878,12 @@ export class NightScene extends Phaser.Scene {
     GameState.stash = 0;
     GameState.fbiSuspicion = Math.max(0, GameState.fbiSuspicion - 40);
 
+    AudioSystem.playAlarm();
     AudioSystem.stop();
     this.clockEvent.remove();
     this.barEvent.remove();
     this.guestSpawnTimer?.remove();
+    this.celebTimers.forEach(t => t?.remove());
 
     this.floatText(this.W / 2, this.H * 0.5, `${L.ev_fbi_raid}\n${L.ev_confiscated}: -$${seized}`, '#ff0000', 3000);
 
@@ -792,6 +905,7 @@ export class NightScene extends Phaser.Scene {
     this.clockEvent?.remove();
     this.barEvent?.remove();
     this.guestSpawnTimer?.remove();
+    this.celebTimers.forEach(t => t?.remove());
     AudioSystem.stop();
     this.saveNightResult(this.fines, 0);
     this.scene.start('EndNight');

@@ -160,7 +160,6 @@ export const AudioSystem = {
     bpm = newBpm;
   },
 
-  // Speed up at end of night for tension
   speedUp() {
     this.setBPM(Math.min(145, bpm + 5));
   },
@@ -168,6 +167,78 @@ export const AudioSystem = {
   resume() {
     try {
       if (ctx && ctx.state === 'suspended') ctx.resume();
+    } catch (e) {}
+  },
+
+  // ─── SFX ─────────────────────────────────────────────────────────────────────
+
+  playStamp(approve) {
+    try {
+      const c = getCtx();
+      const osc  = c.createOscillator();
+      const gain = c.createGain();
+      osc.connect(gain); gain.connect(masterGain);
+      osc.type = 'square';
+      const t = c.currentTime;
+      if (approve) {
+        osc.frequency.setValueAtTime(220, t);
+        osc.frequency.exponentialRampToValueAtTime(440, t + 0.05);
+        gain.gain.setValueAtTime(0.4, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+        osc.start(t); osc.stop(t + 0.12);
+      } else {
+        osc.frequency.setValueAtTime(180, t);
+        osc.frequency.exponentialRampToValueAtTime(80, t + 0.08);
+        gain.gain.setValueAtTime(0.45, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+        osc.start(t); osc.stop(t + 0.18);
+        // second thud
+        const osc2 = c.createOscillator();
+        const g2 = c.createGain();
+        osc2.connect(g2); g2.connect(masterGain);
+        osc2.type = 'square';
+        osc2.frequency.setValueAtTime(100, t + 0.10);
+        g2.gain.setValueAtTime(0.3, t + 0.10);
+        g2.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+        osc2.start(t + 0.10); osc2.stop(t + 0.22);
+      }
+    } catch (e) {}
+  },
+
+  playCoins() {
+    try {
+      const c = getCtx();
+      const t = c.currentTime;
+      [0, 0.06, 0.12].forEach((offset, i) => {
+        const osc = c.createOscillator();
+        const g   = c.createGain();
+        osc.connect(g); g.connect(masterGain);
+        osc.type = 'sine';
+        const freq = 900 + i * 200 + Math.random() * 100;
+        osc.frequency.setValueAtTime(freq, t + offset);
+        osc.frequency.exponentialRampToValueAtTime(freq * 0.8, t + offset + 0.08);
+        g.gain.setValueAtTime(0.25, t + offset);
+        g.gain.exponentialRampToValueAtTime(0.001, t + offset + 0.09);
+        osc.start(t + offset); osc.stop(t + offset + 0.09);
+      });
+    } catch (e) {}
+  },
+
+  playAlarm() {
+    try {
+      const c = getCtx();
+      const t = c.currentTime;
+      for (let i = 0; i < 4; i++) {
+        const osc  = c.createOscillator();
+        const gain = c.createGain();
+        osc.connect(gain); gain.connect(masterGain);
+        osc.type = 'sawtooth';
+        const hiLo = i % 2 === 0 ? 880 : 660;
+        osc.frequency.setValueAtTime(hiLo, t + i * 0.25);
+        gain.gain.setValueAtTime(0.5, t + i * 0.25);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + i * 0.25 + 0.22);
+        osc.start(t + i * 0.25); osc.stop(t + i * 0.25 + 0.22);
+      }
     } catch (e) {}
   },
 };
