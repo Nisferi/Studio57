@@ -5,7 +5,7 @@
 export const GameState = {
   // Meta
   lang: 'ru',           // 'ru' | 'en'
-  contentVersion: null, // 'soft' | 'medium' — chosen on first run
+  contentVersion: null, // 'safe' | 'adult' | 'max' — chosen on first run
 
   // Progress
   nightNumber: 1,
@@ -50,10 +50,16 @@ export const GameState = {
   },
 
   // Monetisation stubs — populated when IAP is wired up
+  // Steam: base game paid, DLC for director's cut
+  // Telegram: nights 1–3 free, 4–8 via Stars, 9–15 via Stars
   store: {
-    premiumSkins: [],
-    boosters: [],
+    premiumSkins: [],       // purchased skin IDs
+    boosters: [],           // active booster IDs
     adFreeUnlocked: false,
+    unlockedNights: 3,      // 3 = free; 8 = paid tier 1; 15 = paid tier 2
+    unlockedCelebs: ['steel', 'warholder'], // free celebs
+    hasDirectorsCut: false, // version 'max' DLC
+    platform: 'web',        // 'web' | 'telegram' | 'steam'
   },
 
   reset() {

@@ -63,15 +63,20 @@ export const LOCALES = {
     ev_fine: 'FINED',
     ev_confiscated: 'STASH SEIZED',
 
-    // Adult content - soft version
-    adult_drugs_soft: '💊 SUSPICIOUS DEAL',
-    adult_sex_soft: '💋 PRIVATE AFTER-PARTY',
-    adult_corrupt_soft: '🤝 GREASED PALMS',
+    // Adult content - safe version
+    adult_drugs_safe: '💊 SUSPICIOUS DEAL',
+    adult_sex_safe: '💋 PRIVATE AFTER-PARTY',
+    adult_corrupt_safe: '🤝 GREASED PALMS',
 
-    // Adult content - medium version
-    adult_drugs_med: '💊 COCAINE DEAL spotted',
-    adult_sex_med: '💋 VIP ROOM incident',
-    adult_corrupt_med: '💵 OFFICER BRIBED',
+    // Adult content - 18+ version
+    adult_drugs_adult: '💊 COCAINE DEAL spotted',
+    adult_sex_adult: '💋 VIP ROOM incident',
+    adult_corrupt_adult: '💵 OFFICER BRIBED',
+
+    // Adult content - max version
+    adult_drugs_max: '💊 DRUG DEAL in restroom',
+    adult_sex_max: '💋 EXPLICIT SCENE — VIP room',
+    adult_corrupt_max: '💵 DIRTY COP at the door',
 
     // End night
     end_title: 'NIGHT OVER',
@@ -181,15 +186,20 @@ export const LOCALES = {
     ev_fine: 'ШТРАФ',
     ev_confiscated: 'ТАЙНИК КОНФИСКОВАН',
 
-    // Adult content - soft
-    adult_drugs_soft: '💊 ПОДОЗРИТЕЛЬНАЯ СДЕЛКА',
-    adult_sex_soft: '💋 ЗАКРЫТАЯ ВЕЧЕРИНКА',
-    adult_corrupt_soft: '🤝 СМАЗАЛИ РУКИ',
+    // Adult content - safe
+    adult_drugs_safe: '💊 ПОДОЗРИТЕЛЬНАЯ СДЕЛКА',
+    adult_sex_safe: '💋 ЗАКРЫТАЯ ВЕЧЕРИНКА',
+    adult_corrupt_safe: '🤝 СМАЗАЛИ РУКИ',
 
-    // Adult content - medium
-    adult_drugs_med: '💊 ЗАМЕЧЕНА СДЕЛКА С ПОРОШКОМ',
-    adult_sex_med: '💋 ИНЦИДЕНТ В VIP-КОМНАТЕ',
-    adult_corrupt_med: '💵 ОФ-ИЦЕР ПОЛУЧИЛ ВЗЯТКУ',
+    // Adult content - 18+
+    adult_drugs_adult: '💊 ЗАМЕЧЕНА СДЕЛКА С ПОРОШКОМ',
+    adult_sex_adult: '💋 ИНЦИДЕНТ В VIP-КОМНАТЕ',
+    adult_corrupt_adult: '💵 ОФИЦЕР ПОЛУЧИЛ ВЗЯТКУ',
+
+    // Adult content - max
+    adult_drugs_max: '💊 КОКАИН В ТУАЛЕТЕ',
+    adult_sex_max: '💋 ОТКРОВЕННАЯ СЦЕНА — VIP НОМЕР',
+    adult_corrupt_max: '💵 ГРЯЗНЫЙ КОП У ВХОДА',
 
     // End night
     end_title: 'НОЧЬ ОКОНЧЕНА',
