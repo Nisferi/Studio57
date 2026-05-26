@@ -1,0 +1,88 @@
+import { STYLE, INTOX } from './guests.js';
+
+export const CELEBRITIES = [
+  {
+    id: 'warholder',
+    name: 'Andy Warholder',
+    age: 49, shownAge: 49,
+    style: STYLE.ULTRA, intox: INTOX.SOBER,
+    hairType: 'silver_wig', skinIdx: 0, hairColor: 0xE8E8E8, outfitColor: '#e0e0e0',
+    desc: { ru: 'Бледный художник в серебряном парике', en: 'Pale artist with a silver wig' },
+    ticketRevenue: 500, barRevenue: 0,
+    entryBonus: 2000,
+    effect: 'hype_boost',       // boosts reputation each tick while inside
+    effectValue: 2,
+    requireUpgrade: null,
+    unlockNight: 2,
+  },
+  {
+    id: 'swagger',
+    name: 'Mick Swagger',
+    age: 34, shownAge: 34,
+    style: STYLE.ULTRA, intox: INTOX.TIPSY,
+    hairType: 'shag', skinIdx: 0, hairColor: 0x3A1A00, outfitColor: '#ff6030',
+    desc: { ru: 'Рок-звезда с огромными губами', en: 'Rock star with huge lips' },
+    ticketRevenue: 500, barRevenue: 800,
+    entryBonus: 1500,
+    effect: 'fan_rush',         // spawns 3 extra guests immediately
+    effectValue: 3,
+    requireUpgrade: 'sound',
+    unlockNight: 2,
+  },
+  {
+    id: 'monelli',
+    name: 'Lisa Monelli',
+    age: 31, shownAge: 31,
+    style: STYLE.ULTRA, intox: INTOX.TIPSY,
+    hairType: 'bob', skinIdx: 0, hairColor: 0x1A0A00, outfitColor: '#ffd700',
+    desc: { ru: 'Королева Бродвея, шампанское рекой', en: 'Broadway queen, champagne non-stop' },
+    ticketRevenue: 500, barRevenue: 600,
+    entryBonus: 1000,
+    effect: 'bar_boost',        // x2.5 bar revenue for this night
+    effectValue: 2.5,
+    requireUpgrade: 'bar',
+    unlockNight: 2,
+  },
+  {
+    id: 'trumpet',
+    name: 'Donald Trumpet',
+    age: 31, shownAge: 31,
+    style: STYLE.CLEAN, intox: INTOX.SOBER,
+    hairType: 'pompadour', skinIdx: 0, hairColor: 0xFFCC00, outfitColor: '#f0f0f0',
+    desc: { ru: 'Амбициозный застройщик, говорит о сделках', en: 'Ambitious developer, talks deals' },
+    ticketRevenue: 1000, barRevenue: 200,
+    entryBonus: 3000,
+    effect: 'big_ticket',       // massive ticket price
+    effectValue: 0,
+    requireUpgrade: 'security',
+    unlockNight: 3,
+  },
+  {
+    id: 'steel',
+    name: 'Sly Steel',
+    age: 31, shownAge: 31,
+    style: STYLE.CLEAN, intox: INTOX.SOBER,
+    hairType: 'natural', skinIdx: 2, hairColor: 0x1A0A00, outfitColor: '#1a1a1a',
+    desc: { ru: 'Мускулистый парень, все его боятся', en: 'Muscular guy — everyone respects him' },
+    ticketRevenue: 400, barRevenue: 100,
+    entryBonus: 800,
+    effect: 'no_fights',        // fight chance → 0 this night
+    effectValue: 0,
+    requireUpgrade: null,
+    unlockNight: 2,
+  },
+  {
+    id: 'mini_michael',
+    name: 'Mini Michael',
+    age: 19, shownAge: 19,
+    style: STYLE.ULTRA, intox: INTOX.SOBER,
+    hairType: 'afro', skinIdx: 3, hairColor: 0x1A0A00, outfitColor: '#ffffff',
+    desc: { ru: 'Восходящая поп-звезда с афро, всегда танцует', en: 'Rising pop star with afro, always dancing' },
+    ticketRevenue: 500, barRevenue: 300,
+    entryBonus: 1200,
+    effect: 'full_dance_floor', // guests stay longer → more bar revenue
+    effectValue: 1.5,
+    requireUpgrade: 'sound',
+    unlockNight: 3,
+  },
+];
