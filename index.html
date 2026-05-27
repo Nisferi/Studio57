@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>Studio 57 — Velvet &amp; Stash</title>
+
+  <!-- Telegram Mini App SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!-- Pixel font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100%; height: 100%;
+      background: #020008;
+      overflow: hidden;
+      touch-action: none;
+    }
+    canvas { display: block; margin: 0 auto; }
+    #loading-screen {
+      position: fixed; inset: 0;
+      background: #020008;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      color: #ffd700;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
+      gap: 20px;
+      z-index: 9999;
+    }
+    #loading-screen h1 { font-size: 22px; color: #ff00a0; text-shadow: 0 0 20px #ff00a0; }
+    #loading-bar-wrap { width: 200px; height: 12px; border: 2px solid #ffd700; }
+    #loading-bar { width: 0%; height: 100%; background: #ffd700; transition: width 0.2s; }
+  </style>
+</head>
+<body>
+  <div id="loading-screen">
+    <h1>STUDIO 57</h1>
+    <p>NEW YORK · 1977</p>
+    <div id="loading-bar-wrap"><div id="loading-bar"></div></div>
+    <p id="loading-tip">Loading...</p>
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
