@@ -774,11 +774,11 @@ export class NightScene extends Phaser.Scene {
 
   fireEvent(ev, L) {
     this.eventPending = true;
-    // Sync local velvetBox into GameState so event resolve() can read/modify it
-    GameState.velvetBox = this.velvetBox;
+    // Sync local night earnings so event resolve() can read/modify them
+    GameState.nightEarnings = this.velvetBox;
     this.scene.launch('EventPopup', { event: ev, onClose: (result) => {
       // Pull changes back from event
-      this.velvetBox = GameState.velvetBox;
+      this.velvetBox = GameState.nightEarnings;
       this.eventPending = false;
       this.updateHUD(L);
       if (result?.msg) {
@@ -856,7 +856,7 @@ export class NightScene extends Phaser.Scene {
     }
 
     // FBI raid check
-    if (GameState.fbiSuspicion >= 15 && Math.random() < GameState.fbiSuspicion / 100 * 0.02) {
+    if (GameState.fbiSuspicion >= 40 && Math.random() < GameState.fbiSuspicion / 100 * 0.02) {
       this.triggerFBIRaid(L);
     }
 
@@ -912,8 +912,8 @@ export class NightScene extends Phaser.Scene {
   }
 
   saveNightResult(fines, seized) {
-    GameState.velvetBox  = Math.max(0, this.velvetBox);
-    // fines already deducted from velvetBox during night
+    // Store night's gross earnings separately; EndNightScene will tax and add to velvetBox
+    GameState.nightEarnings = Math.max(0, this.velvetBox);
     SaveSystem.save();
   }
 }

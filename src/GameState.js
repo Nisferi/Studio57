@@ -12,8 +12,9 @@ export const GameState = {
   totalNights: 0,
 
   // Finances
-  velvetBox: 0,   // legal cash (taxed each night)
-  stash: 0,       // hidden cash (no tax, but FBI risk)
+  velvetBox: 0,      // legal cash accumulated across nights (after tax)
+  nightEarnings: 0,  // current/last night's gross earnings (used by EndNight for tax)
+  stash: 0,          // hidden cash (no tax, but FBI risk)
   totalEarned: 0,
   totalTaxPaid: 0,
   bankrupt: false,
@@ -87,7 +88,7 @@ export const GameState = {
   reset() {
     Object.assign(this, {
       nightNumber: 1, totalNights: 0,
-      velvetBox: 0, stash: 0, totalEarned: 0, totalTaxPaid: 0, bankrupt: false,
+      velvetBox: 0, nightEarnings: 0, stash: 0, totalEarned: 0, totalTaxPaid: 0, bankrupt: false,
       fbiSuspicion: 0, policeHeat: 0, reputation: 50,
       upgrades: { sound: 0, bar: 0, security: 0, lights: 0, vipLounge: 0 },
       nightStats: { approved: 0, rejected: 0, fights: 0, policeVisits: 0, underageSlipped: 0, celebsHosted: [] },

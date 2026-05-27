@@ -14,14 +14,15 @@ export class EndNightScene extends Phaser.Scene {
     const L = LOCALES[GameState.lang];
 
     // ── Calculate financials ──
-    const revenue   = GameState.velvetBox;
+    const revenue   = GameState.nightEarnings || 0; // gross earnings from this night only
     const taxRate   = 0.30;
     const tax       = Math.round(revenue * taxRate);
     const net       = revenue - tax;
 
-    // Apply results to GameState
-    GameState.velvetBox   = net;
-    GameState.totalEarned = (GameState.totalEarned || 0) + net;
+    // Apply results to GameState — ADD net to accumulated velvetBox, don't replace
+    GameState.velvetBox    = (GameState.velvetBox || 0) + net;
+    GameState.nightEarnings = 0;
+    GameState.totalEarned  = (GameState.totalEarned || 0) + net;
     GameState.totalTaxPaid = (GameState.totalTaxPaid || 0) + tax;
     GameState.reputation   = Math.min(100, (GameState.reputation || 50) + 3);
 

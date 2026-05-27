@@ -27,10 +27,10 @@ export const NIGHT_EVENTS = [
     ],
     resolve(choice, GameState) {
       if (choice === 'allow') {
-        GameState.velvetBox  += 800;
+        GameState.nightEarnings  += 800;
         GameState.reputation  = Math.min(100, GameState.reputation + 15);
         if (Math.random() < 0.4) {
-          GameState.velvetBox -= 400;
+          GameState.nightEarnings -= 400;
           return { ok: false, msg: 'CHAOS! -$400' };
         }
         return { ok: true, msg: 'HYPE! +$800' };
@@ -70,8 +70,8 @@ export const NIGHT_EVENTS = [
       }
       if (choice === 'bribe') {
         const cost = 200;
-        if (GameState.velvetBox >= cost) {
-          GameState.velvetBox -= cost;
+        if (GameState.nightEarnings >= cost) {
+          GameState.nightEarnings -= cost;
           GameState.stash     += 500;
           return { ok: true, msg: '-$200 → STASH +$500' };
         }
@@ -112,7 +112,7 @@ export const NIGHT_EVENTS = [
           return { ok: false, msg: 'SCANDAL! Police +20' };
         }
         GameState.reputation = Math.min(100, GameState.reputation + 20);
-        GameState.velvetBox  += 600;
+        GameState.nightEarnings  += 600;
         return { ok: true, msg: 'HYPE! Rep +20, +$600' };
       }
       return { ok: true, msg: null };
@@ -145,10 +145,10 @@ export const NIGHT_EVENTS = [
     resolve(choice, GameState) {
       if (choice === 'bribe') {
         const total = 500;
-        const fromVelvet = Math.min(total, GameState.velvetBox);
+        const fromVelvet = Math.min(total, GameState.nightEarnings);
         const remaining  = total - fromVelvet;
         if (fromVelvet + GameState.stash >= total) {
-          GameState.velvetBox    -= fromVelvet;
+          GameState.nightEarnings    -= fromVelvet;
           GameState.stash        -= remaining;
           GameState.fbiSuspicion  = Math.max(0, GameState.fbiSuspicion - 25);
           GameState.policeHeat    = Math.max(0, GameState.policeHeat   - 30);
@@ -202,8 +202,8 @@ export const NIGHT_EVENTS = [
       }
       if (choice === 'exclusive') {
         const cost = 300;
-        if (GameState.velvetBox >= cost) {
-          GameState.velvetBox  -= cost;
+        if (GameState.nightEarnings >= cost) {
+          GameState.nightEarnings  -= cost;
           GameState.reputation  = Math.min(100, GameState.reputation + 25);
           return { ok: true, msg: '-$300 → FRONT PAGE! Rep +25' };
         }
@@ -239,15 +239,15 @@ export const NIGHT_EVENTS = [
     ],
     resolve(choice, GameState) {
       if (choice === 'declare') {
-        const tax = Math.round(GameState.velvetBox * 0.30);
-        GameState.velvetBox    -= tax;
+        const tax = Math.round(GameState.nightEarnings * 0.30);
+        GameState.nightEarnings    -= tax;
         GameState.totalTaxPaid += tax;
         GameState.fbiSuspicion  = Math.max(0, GameState.fbiSuspicion - 20);
         return { ok: true, msg: `-$${tax} taxes → FBI -20%` };
       }
       if (choice === 'hide') {
-        const moved = Math.round(GameState.velvetBox * 0.5);
-        GameState.velvetBox    -= moved;
+        const moved = Math.round(GameState.nightEarnings * 0.5);
+        GameState.nightEarnings    -= moved;
         GameState.stash        += moved;
         GameState.fbiSuspicion  = Math.min(100, GameState.fbiSuspicion + 15);
         GameState.characterMemory.hughes.evadedCount += 1;
