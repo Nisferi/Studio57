@@ -152,12 +152,110 @@ export const NIGHT_EVENTS = [
           GameState.stash        -= remaining;
           GameState.fbiSuspicion  = Math.max(0, GameState.fbiSuspicion - 25);
           GameState.policeHeat    = Math.max(0, GameState.policeHeat   - 30);
+          GameState.characterMemory.collins.bribeCount += 1;
           return { ok: true, msg: 'FBI -25%, Police -30%' };
         }
         return { ok: false, msg: 'NOT ENOUGH CASH!' };
       }
+      // Refused Collins
+      GameState.characterMemory.collins.refusedCount += 1;
+      if (GameState.characterMemory.collins.refusedCount >= 3) {
+        GameState.characterMemory.collins.hostile = true;
+      }
       GameState.policeHeat = Math.min(100, GameState.policeHeat + 15);
       return { ok: true, msg: 'Police heat +15' };
+    },
+  },
+
+  {
+    id: 'journalist_at_door',
+    unlockNight: 2,
+    chance: 0.11,
+    title_safe:   { ru: '📸 РЕПОРТЁР У ВХОДА',  en: '📸 REPORTER AT THE DOOR' },
+    title_adult:  { ru: '📸 ПРЕССА ЖДЁТ',        en: '📸 PRESS IS WAITING'     },
+    title_max:    { ru: '📸 DAILY POST',          en: '📸 DAILY POST'           },
+    body_safe: {
+      ru: 'Журналист хочет написать репортаж о клубе. Впустить — хайп. Отказать — тихо.',
+      en: 'A journalist wants to write a piece about the club. Let in — hype. Refuse — keep quiet.',
+    },
+    body_adult: {
+      ru: 'Репортёр Daily Post с камерой. Хочет снять звёзд. Может быть скандал, а может — реклама на первую полосу.',
+      en: 'Daily Post reporter with a camera. Wants shots of the stars. Could be a scandal — or a front-page ad.',
+    },
+    body_max: {
+      ru: 'Марк Харрис, Daily Post. «Виктор, у меня фото из VIP. Либо я пишу хорошую статью — либо плохую». Выбирай.',
+      en: 'Mark Harris, Daily Post. "Victor, I have shots from the VIP. Either I write a good story — or a bad one." Choose.',
+    },
+    choices: [
+      { key: 'allow',    label: { ru: 'ВПУСТИТЬ',     en: 'LET IN'  } },
+      { key: 'exclusive',label: { ru: 'ЭКСКЛЮЗИВ',    en: 'EXCLUSIVE' } },
+      { key: 'deny',     label: { ru: 'ОТКАЗАТЬ',     en: 'REFUSE'  } },
+    ],
+    resolve(choice, GameState) {
+      if (choice === 'allow') {
+        if (Math.random() < 0.35) {
+          GameState.policeHeat = Math.min(100, GameState.policeHeat + 10);
+          return { ok: false, msg: 'SCANDAL PHOTOS! Police +10' };
+        }
+        GameState.reputation = Math.min(100, GameState.reputation + 12);
+        return { ok: true, msg: 'PRESS COVERAGE! Rep +12' };
+      }
+      if (choice === 'exclusive') {
+        const cost = 300;
+        if (GameState.velvetBox >= cost) {
+          GameState.velvetBox  -= cost;
+          GameState.reputation  = Math.min(100, GameState.reputation + 25);
+          return { ok: true, msg: '-$300 → FRONT PAGE! Rep +25' };
+        }
+        return { ok: false, msg: 'NOT ENOUGH CASH!' };
+      }
+      return { ok: true, msg: 'Kept quiet.' };
+    },
+  },
+
+  {
+    id: 'irs_audit_letter',
+    unlockNight: 3,
+    chance: 0.09,
+    title_safe:   { ru: '✉️ ПИСЬМО ОТ IRS',      en: '✉️ IRS LETTER'          },
+    title_adult:  { ru: '✉️ НАЛОГОВАЯ ПРОВЕРКА', en: '✉️ TAX AUDIT NOTICE'    },
+    title_max:    { ru: '✉️ ЭТО АГЕНТ ХЬЮЗ',     en: '✉️ AGENT HUGHES'        },
+    body_safe: {
+      ru: 'Налоговая служба прислала предупреждение. Возможна проверка. Лучше вывести часть денег.',
+      en: 'The IRS sent a warning notice. Audit possible. Better to move some funds.',
+    },
+    body_adult: {
+      ru: 'Официальное уведомление об аудите. У вас 48 часов. Тайник — риск. Задекларировать — потеря 30%.',
+      en: 'Official audit notice. 48 hours. The stash is a risk. Declare — lose 30%. Panic or act smart.',
+    },
+    body_max: {
+      ru: 'Агент Дональд Хьюз, IRS. Знает про мусорные мешки. Знает про вентиляцию. «Советую задекларировать до пятницы». Или рискнуть?',
+      en: 'Agent Donald Hughes, IRS. Knows about the trash bags. Knows about the vents. "I suggest you declare by Friday." Or gamble?',
+    },
+    choices: [
+      { key: 'declare', label: { ru: 'ЗАДЕКЛАРИРОВАТЬ (−30%)', en: 'DECLARE (−30%)' } },
+      { key: 'hide',    label: { ru: 'СПРЯТАТЬ В ТАЙНИК',      en: 'HIDE IN STASH'  } },
+      { key: 'ignore',  label: { ru: 'ИГНОРИРОВАТЬ',           en: 'IGNORE'         } },
+    ],
+    resolve(choice, GameState) {
+      if (choice === 'declare') {
+        const tax = Math.round(GameState.velvetBox * 0.30);
+        GameState.velvetBox    -= tax;
+        GameState.totalTaxPaid += tax;
+        GameState.fbiSuspicion  = Math.max(0, GameState.fbiSuspicion - 20);
+        return { ok: true, msg: `-$${tax} taxes → FBI -20%` };
+      }
+      if (choice === 'hide') {
+        const moved = Math.round(GameState.velvetBox * 0.5);
+        GameState.velvetBox    -= moved;
+        GameState.stash        += moved;
+        GameState.fbiSuspicion  = Math.min(100, GameState.fbiSuspicion + 15);
+        GameState.characterMemory.hughes.evadedCount += 1;
+        return { ok: true, msg: `STASH +$${moved} | FBI +15%` };
+      }
+      // ignore
+      GameState.fbiSuspicion = Math.min(100, GameState.fbiSuspicion + 25);
+      return { ok: false, msg: 'FBI INTEREST +25%!' };
     },
   },
 ];

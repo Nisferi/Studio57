@@ -2,13 +2,13 @@ import Phaser from 'phaser';
 import { BootScene }          from './scenes/BootScene.js';
 import { VersionSelectScene } from './scenes/VersionSelectScene.js';
 import { MenuScene }          from './scenes/MenuScene.js';
+import { StreetScene }        from './scenes/StreetScene.js';
 import { NightScene }         from './scenes/NightScene.js';
 import { EventPopupScene }    from './scenes/EventPopupScene.js';
 import { EndNightScene }      from './scenes/EndNightScene.js';
 import { OfficeScene }        from './scenes/OfficeScene.js';
 import { GameOverScene }      from './scenes/GameOverScene.js';
 
-// Expose language for t() helper
 window.__studio57Lang = 'ru';
 
 const config = {
@@ -26,13 +26,13 @@ const config = {
     BootScene,
     VersionSelectScene,
     MenuScene,
+    StreetScene,
     NightScene,
     EventPopupScene,
     EndNightScene,
     OfficeScene,
     GameOverScene,
   ],
-  // No physics needed — it's a card game
   physics: { default: 'arcade', arcade: { debug: false } },
 };
 

@@ -3,6 +3,7 @@ import { GameState } from '../GameState.js';
 import { SaveSystem } from '../SaveSystem.js';
 import { LOCALES } from '../data/locales.js';
 import { UPGRADES, getUpgradeNextLevel } from '../data/upgrades.js';
+import { getArnieLine } from '../data/arnie_lines.js';
 
 const DARK = 0x020008;
 const GOLD = 0xffd700;
@@ -47,19 +48,22 @@ export class OfficeScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // Upgrade cards
-    const cardH   = (H * 0.60) / UPGRADE_KEYS.length;
+    const cardH   = (H * 0.52) / UPGRADE_KEYS.length;
     const cardW   = Math.min(W * 0.90, 340);
-    const startY  = H * 0.24;
+    const startY  = H * 0.23;
 
     UPGRADE_KEYS.forEach((key, i) => {
       this.buildUpgradeCard(W / 2, startY + i * cardH + cardH / 2, cardW, cardH - 8, key, i, L);
     });
 
+    // Arnie dialogue panel
+    this.buildArniePanel(W, H);
+
     // OPEN TONIGHT button
-    this.makeBtn(W / 2, H * 0.91, 200, 46, L.office_open, 0x006620, 0x009940, () => {
+    this.makeBtn(W / 2, H * 0.92, 200, 46, L.office_open, 0x006620, 0x009940, () => {
       GameState.resetNightStats();
       SaveSystem.save();
-      this.scene.start('Night');
+      this.scene.start('Street');
     });
 
     // Back to menu
@@ -164,6 +168,39 @@ export class OfficeScene extends Phaser.Scene {
 
     // Rebuild UI
     this.scene.restart();
+  }
+
+  buildArniePanel(W, H) {
+    const line   = getArnieLine(GameState);
+    const panW   = W * 0.88;
+    const panH   = 66;
+    const panY   = H * 0.80;
+
+    const bg = this.add.rectangle(W / 2, panY, panW, panH, 0x0d0820)
+      .setStrokeStyle(1, 0x332266);
+
+    // Small avatar circle
+    const avatarX = W / 2 - panW / 2 + 20;
+    const g = this.add.graphics();
+    g.fillStyle(0x3a2a6a);
+    g.fillCircle(avatarX, panY, 14);
+    g.lineStyle(1, 0x6644aa);
+    g.strokeCircle(avatarX, panY, 14);
+    // Eyes
+    g.fillStyle(0xffffff);
+    g.fillCircle(avatarX - 4, panY - 2, 2);
+    g.fillCircle(avatarX + 4, panY - 2, 2);
+
+    this.add.text(avatarX + 24, panY - panH / 2 + 8, 'ARNIE:', {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '7px', color: '#aa88ff',
+    });
+
+    this.add.text(avatarX + 24, panY - panH / 2 + 22, line.text, {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '6px', color: '#cccccc',
+      wordWrap: { width: panW - avatarX - 20 },
+    });
   }
 
   drawOfficeBg(W, H) {
