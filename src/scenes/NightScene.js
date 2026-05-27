@@ -76,51 +76,276 @@ export class NightScene extends Phaser.Scene {
   buildBackground(W, H) {
     const g = this.add.graphics();
 
-    // Sky
-    g.fillGradientStyle(0x020008, 0x020008, 0x0a0020, 0x0a0020, 1);
-    g.fillRect(0, 0, W, H);
+    // ── CEILING (top third of screen) ──────────────────────────────────────────
+    // Dark club ceiling base
+    g.fillStyle(0x03000a);
+    g.fillRect(0, 0, W, H * 0.28);
 
-    // Stars
-    for (let i = 0; i < 55; i++) {
-      g.fillStyle(0xffffff, Math.random() * 0.6 + 0.1);
-      g.fillRect(Phaser.Math.Between(0, W), Phaser.Math.Between(0, H * 0.28), 2, 2);
+    // Ceiling spotlight frames (left and right rigs)
+    const rigPositions = [W * 0.08, W * 0.22, W * 0.78, W * 0.92];
+    rigPositions.forEach(rx => {
+      g.fillStyle(0x221100);
+      g.fillRect(rx - 10, 2, 20, 14);
+      g.lineStyle(1, 0x443300);
+      g.strokeRect(rx - 10, 2, 20, 14);
+      // Cable to spotlight
+      g.lineStyle(1, 0x332200);
+      g.beginPath();
+      g.moveTo(rx, 0);
+      g.lineTo(rx, 16);
+      g.strokePath();
+    });
+
+    // Cables between rigs (horizontal wires across ceiling)
+    g.lineStyle(1, 0x1a0800);
+    g.beginPath();
+    g.moveTo(W * 0.08, 10); g.lineTo(W * 0.92, 10);
+    g.strokePath();
+    g.beginPath();
+    g.moveTo(W * 0.22, 8); g.lineTo(W * 0.78, 8);
+    g.strokePath();
+
+    // ── WALLS (middle section H*0.28 – H*0.62) ─────────────────────────────────
+    // Main wall background
+    g.fillStyle(0x08001a);
+    g.fillRect(0, H * 0.28, W, H * 0.34);
+
+    // Left decorative panel — vertical alternating stripes
+    const panelColors = [0x0d0025, 0x12002e, 0x08001a, 0x150035];
+    for (let i = 0; i < 8; i++) {
+      g.fillStyle(panelColors[i % panelColors.length]);
+      g.fillRect(i * W * 0.04, H * 0.28, W * 0.04, H * 0.34);
+    }
+    // Right decorative panel
+    for (let i = 0; i < 8; i++) {
+      g.fillStyle(panelColors[i % panelColors.length]);
+      g.fillRect(W - (i + 1) * W * 0.04, H * 0.28, W * 0.04, H * 0.34);
     }
 
-    // Building
-    g.fillStyle(0x0f0020);
-    g.fillRect(W * 0.01, H * 0.04, W * 0.98, H * 0.58);
+    // Center back wall (slightly lighter)
+    g.fillStyle(0x0d0030);
+    g.fillRect(W * 0.32, H * 0.28, W * 0.36, H * 0.34);
 
-    // Windows
-    for (let r = 0; r < 3; r++) {
-      for (let c = 0; c < 9; c++) {
-        g.fillStyle(Math.random() > 0.4 ? 0xffd060 : 0x08080e);
-        g.fillRect(W * 0.06 + c * W * 0.10, H * 0.07 + r * H * 0.08, W * 0.07, H * 0.05);
+    // Stage / podium in the center of the back wall
+    g.fillStyle(0x180040);
+    g.fillRect(W * 0.38, H * 0.42, W * 0.24, H * 0.08);
+    g.lineStyle(1, 0x6600aa);
+    g.strokeRect(W * 0.38, H * 0.42, W * 0.24, H * 0.08);
+    // Stage lip (front edge highlight)
+    g.lineStyle(2, 0x9900ff);
+    g.beginPath();
+    g.moveTo(W * 0.38, H * 0.50);
+    g.lineTo(W * 0.62, H * 0.50);
+    g.strokePath();
+
+    // Disco star decorations on side walls (small diamonds)
+    const starXL = [W * 0.06, W * 0.14, W * 0.09, W * 0.18];
+    const starXR = [W * 0.82, W * 0.91, W * 0.86, W * 0.95];
+    const starY  = [H * 0.31, H * 0.37, H * 0.44, H * 0.51];
+    const starColors = [0xff00ff, 0x00ffff, 0xffff00, 0xff8800];
+    starXL.forEach((sx, i) => {
+      g.fillStyle(starColors[i], 0.55);
+      const r = 4;
+      g.fillTriangle(sx, starY[i] - r, sx - r, starY[i] + r, sx + r, starY[i] + r);
+      g.fillTriangle(sx, starY[i] + r, sx - r, starY[i] - r, sx + r, starY[i] - r);
+    });
+    starXR.forEach((sx, i) => {
+      g.fillStyle(starColors[(i + 2) % starColors.length], 0.55);
+      const r = 4;
+      g.fillTriangle(sx, starY[i] - r, sx - r, starY[i] + r, sx + r, starY[i] + r);
+      g.fillTriangle(sx, starY[i] + r, sx - r, starY[i] - r, sx + r, starY[i] - r);
+    });
+
+    // Ambient wall glow — tinted gradient at the base of the walls
+    g.fillGradientStyle(0x000000, 0x000000, 0x1a0040, 0x1a0040, 0);
+    g.fillRect(0, H * 0.50, W * 0.30, H * 0.12);
+    g.fillGradientStyle(0x000000, 0x000000, 0x1a0040, 0x1a0040, 0);
+    g.fillRect(W * 0.70, H * 0.50, W * 0.30, H * 0.12);
+
+    // Silhouettes of background dancers (5 figures)
+    const dancerX = [W * 0.10, W * 0.22, W * 0.50, W * 0.76, W * 0.88];
+    dancerX.forEach((dx, i) => {
+      const dy = H * 0.54;
+      g.fillStyle(0x000000, 0.65);
+      // Head
+      g.fillCircle(dx, dy - 22, 6);
+      // Body
+      g.fillRect(dx - 5, dy - 16, 10, 16);
+      // Arms (alternating raised/lowered for pose variety)
+      if (i % 2 === 0) {
+        g.fillRect(dx - 12, dy - 22, 7, 4);
+        g.fillRect(dx + 5,  dy - 14, 7, 4);
+      } else {
+        g.fillRect(dx - 12, dy - 14, 7, 4);
+        g.fillRect(dx + 5,  dy - 22, 7, 4);
       }
-    }
+    });
 
-    // Entry arch (dark)
+    // ── ENTRY ARCH ──────────────────────────────────────────────────────────────
     g.fillStyle(0x020008);
     g.fillRect(W * 0.33, H * 0.35, W * 0.34, H * 0.27);
     g.lineStyle(3, 0xffd700);
     g.strokeRect(W * 0.33, H * 0.35, W * 0.34, H * 0.27);
 
-    // Ground
-    g.fillStyle(0x080808);
-    g.fillRect(0, H * 0.62, W, H * 0.38);
-
-    // Sidewalk markings
-    g.lineStyle(1, 0x1a1a1a);
-    for (let i = 0; i < 6; i++) {
-      g.strokeRect(W * 0.05 + i * W * 0.15, H * 0.65, W * 0.12, H * 0.02);
+    // ── DANCE FLOOR (H*0.62 – H*0.75) ──────────────────────────────────────────
+    // Checkerboard tiles
+    const tileW = Math.ceil(W / 12);
+    const tileH = Math.ceil(H * 0.13 / 8);
+    for (let col = 0; col < 12; col++) {
+      for (let row = 0; row < 8; row++) {
+        const even = (col + row) % 2 === 0;
+        g.fillStyle(even ? 0x1a0030 : 0x000010);
+        g.fillRect(col * tileW, H * 0.62 + row * tileH, tileW, tileH);
+      }
     }
 
-    // Searchlights
-    g.fillStyle(0xffffff, 0.05);
-    g.fillTriangle(W * 0.1, H * 0.62, W * 0.03, 0, W * 0.18, 0);
-    g.fillTriangle(W * 0.9, H * 0.62, W * 0.82, 0, W * 0.97, 0);
+    // Colored light blobs on dance floor
+    const blobData = [
+      { x: W * 0.18, y: H * 0.67, r: 28, color: 0xff00ff },
+      { x: W * 0.45, y: H * 0.70, r: 22, color: 0x0066ff },
+      { x: W * 0.72, y: H * 0.66, r: 30, color: 0xffcc00 },
+      { x: W * 0.88, y: H * 0.71, r: 18, color: 0x00ffcc },
+    ];
+    blobData.forEach(({ x, y, r, color }) => {
+      g.fillStyle(color, 0.15);
+      g.fillCircle(x, y, r);
+    });
 
-    // Neon sign
+    // Front edge of dance floor — shiny border strip
+    g.fillStyle(0x440066);
+    g.fillRect(0, H * 0.745, W, 4);
+    g.lineStyle(1, 0xcc44ff);
+    g.beginPath();
+    g.moveTo(0, H * 0.745);
+    g.lineTo(W, H * 0.745);
+    g.strokePath();
+
+    // ── FLOOR BELOW DANCE FLOOR ─────────────────────────────────────────────────
+    g.fillStyle(0x050005);
+    g.fillRect(0, H * 0.75, W, H * 0.25);
+
+    // ── NEON SIGN ───────────────────────────────────────────────────────────────
     this.drawNeonSign(W / 2, H * 0.13);
+
+    // ── DISCO BALL ──────────────────────────────────────────────────────────────
+    this.buildDiscoBall(W, H);
+  }
+
+  buildDiscoBall(W, H) {
+    const cx = W / 2;
+    const ballY = H * 0.08;
+    const ballR = 22;
+
+    // Suspension wire from ceiling top
+    const wire = this.add.graphics();
+    wire.lineStyle(1, 0x888888, 0.8);
+    wire.beginPath();
+    wire.moveTo(cx, 0);
+    wire.lineTo(cx, ballY - ballR);
+    wire.strokePath();
+
+    // Disco ball container (so we can tween-rotate child graphics)
+    const ballContainer = this.add.container(cx, ballY);
+
+    const ballG = this.add.graphics();
+    // Metallic base circle
+    ballG.fillStyle(0x888888, 1);
+    ballG.fillCircle(0, 0, ballR);
+    // Highlight sheen
+    ballG.fillStyle(0xdddddd, 0.5);
+    ballG.fillCircle(-ballR * 0.3, -ballR * 0.3, ballR * 0.35);
+
+    // Mirror tile mosaic — grid of small rectangles clipped to circle shape
+    const tileSize = 4;
+    const tileColors = [0xffffff, 0xcccccc, 0xffd700, 0xaaaaaa, 0xffffff, 0x88ccff, 0xffffff, 0xffccaa];
+    for (let ty = -ballR + 2; ty < ballR - 2; ty += tileSize + 1) {
+      for (let tx = -ballR + 2; tx < ballR - 2; tx += tileSize + 1) {
+        if (tx * tx + ty * ty < (ballR - 2) * (ballR - 2)) {
+          const col = tileColors[Math.floor(Math.random() * tileColors.length)];
+          ballG.fillStyle(col, Math.random() * 0.5 + 0.5);
+          ballG.fillRect(tx, ty, tileSize, tileSize);
+        }
+      }
+    }
+
+    // Thin outline
+    ballG.lineStyle(1, 0xaaaaaa, 0.7);
+    ballG.strokeCircle(0, 0, ballR);
+
+    ballContainer.add(ballG);
+
+    // Slow rotation tween on the container
+    this.tweens.add({
+      targets: ballContainer,
+      angle: 360,
+      duration: 8000,
+      repeat: -1,
+      ease: 'Linear',
+    });
+
+    // Light rays from the disco ball (static graphics behind the container)
+    const rayG = this.add.graphics();
+    const rayAngles = [-70, -30, 20, 60, 110, 150];
+    const rayLength = H * 0.55;
+    rayAngles.forEach(angleDeg => {
+      const rad = Phaser.Math.DegToRad(angleDeg);
+      const ex = cx + Math.cos(rad) * rayLength;
+      const ey = ballY + Math.sin(rad) * rayLength;
+      const spreadR = 18;
+      const perpX = -Math.sin(rad) * spreadR;
+      const perpY =  Math.cos(rad) * spreadR;
+      rayG.fillStyle(0xffffff, 0.04);
+      rayG.fillTriangle(
+        cx + Math.cos(rad) * ballR,
+        ballY + Math.sin(rad) * ballR,
+        ex + perpX, ey + perpY,
+        ex - perpX, ey - perpY
+      );
+    });
+
+    // Move rays behind the ball
+    rayG.setDepth(-1);
+    ballContainer.setDepth(1);
+    wire.setDepth(0);
+
+    // ── ANIMATED FLOOR SPOTS ────────────────────────────────────────────────────
+    const spotData = [
+      { x: W * 0.20, y: H * 0.68, color: 0xff00ff, r: 14 },
+      { x: W * 0.50, y: H * 0.71, color: 0x00ccff, r: 12 },
+      { x: W * 0.80, y: H * 0.67, color: 0xffdd00, r: 16 },
+      { x: W * 0.35, y: H * 0.70, color: 0x00ff88, r: 10 },
+    ];
+    spotData.forEach((sd, idx) => {
+      const spotG = this.add.graphics();
+      spotG.fillStyle(sd.color, 0.25);
+      spotG.fillCircle(0, 0, sd.r);
+      spotG.x = sd.x;
+      spotG.y = sd.y;
+
+      // Each spot drifts in a small elliptical path
+      const orbitRX = 30 + idx * 12;
+      const orbitRY = 10;
+      const startAngle = (idx / spotData.length) * Math.PI * 2;
+      const duration = 4000 + idx * 800;
+      this.tweens.add({
+        targets: spotG,
+        x: { from: sd.x - orbitRX, to: sd.x + orbitRX },
+        duration: duration,
+        repeat: -1,
+        yoyo: true,
+        ease: 'Sine.easeInOut',
+        delay: idx * 600,
+      });
+      this.tweens.add({
+        targets: spotG,
+        alpha: { from: 0.15, to: 0.55 },
+        duration: duration / 2,
+        repeat: -1,
+        yoyo: true,
+        ease: 'Sine.easeInOut',
+        delay: idx * 300,
+      });
+    });
   }
 
   drawNeonSign(x, y) {

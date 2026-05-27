@@ -51,13 +51,17 @@ export class StreetScene extends Phaser.Scene {
   buildExterior(W, H) {
     const g = this.add.graphics();
 
-    // Night sky gradient
+    // ── 1. NIGHT SKY ──────────────────────────────────────────────────────────
     g.fillGradientStyle(0x000005, 0x000005, 0x0a0020, 0x0a0020, 1);
     g.fillRect(0, 0, W, H);
 
+    // Horizon purple glow
+    g.fillStyle(0x3a0060, 0.15);
+    g.fillRect(0, H * 0.20, W, H * 0.06);
+
     // Stars
-    for (let i = 0; i < 60; i++) {
-      const a = Math.random() * 0.5 + 0.1;
+    for (let i = 0; i < 70; i++) {
+      const a = Math.random() * 0.55 + 0.1;
       g.fillStyle(0xffffff, a);
       g.fillRect(
         Phaser.Math.Between(0, W),
@@ -66,21 +70,28 @@ export class StreetScene extends Phaser.Scene {
       );
     }
 
-    // Far buildings (city skyline)
+    // Moon halo
+    g.fillStyle(0xfff0c0, 0.06);
+    g.fillCircle(W * 0.82, H * 0.06, 28);
+    // Moon
+    g.fillStyle(0xfff8e0, 0.9);
+    g.fillCircle(W * 0.82, H * 0.06, 14);
+
+    // ── 2. BACKGROUND BUILDINGS ───────────────────────────────────────────────
     const buildings = [
-      { x: 0.02, w: 0.08, h: 0.38, col: 0x050010 },
-      { x: 0.10, w: 0.06, h: 0.28, col: 0x040008 },
-      { x: 0.16, w: 0.12, h: 0.44, col: 0x060014 },
-      { x: 0.28, w: 0.05, h: 0.22, col: 0x040008 },
-      { x: 0.66, w: 0.11, h: 0.35, col: 0x050010 },
-      { x: 0.78, w: 0.07, h: 0.45, col: 0x060014 },
-      { x: 0.86, w: 0.06, h: 0.26, col: 0x040008 },
-      { x: 0.92, w: 0.08, h: 0.32, col: 0x050010 },
+      { x: 0.02, w: 0.08, h: 0.38, col: 0x050010, tank: false },
+      { x: 0.10, w: 0.06, h: 0.28, col: 0x040008, tank: false },
+      { x: 0.16, w: 0.12, h: 0.44, col: 0x060014, tank: true  },
+      { x: 0.28, w: 0.05, h: 0.22, col: 0x040008, tank: false },
+      { x: 0.66, w: 0.11, h: 0.35, col: 0x050010, tank: false },
+      { x: 0.78, w: 0.07, h: 0.45, col: 0x060014, tank: true  },
+      { x: 0.86, w: 0.06, h: 0.26, col: 0x040008, tank: false },
+      { x: 0.92, w: 0.08, h: 0.32, col: 0x050010, tank: true  },
     ];
     buildings.forEach(b => {
       g.fillStyle(b.col);
       g.fillRect(W * b.x, H * (0.26 - b.h), W * b.w, H * b.h);
-      // windows
+      // Windows
       for (let wy = 0; wy < Math.floor(b.h * 18); wy++) {
         for (let wx = 0; wx < Math.floor(b.w * 12); wx++) {
           if (Math.random() > 0.55) {
@@ -93,39 +104,126 @@ export class StreetScene extends Phaser.Scene {
           }
         }
       }
+      // Water tower on select buildings
+      if (b.tank) {
+        const tx = W * (b.x + b.w * 0.5);
+        const ty = H * (0.26 - b.h) - 1;
+        // Support legs
+        g.fillStyle(0x0a0010);
+        g.fillRect(tx - 5, ty - 10, 2, 10);
+        g.fillRect(tx + 3, ty - 10, 2, 10);
+        // Tank body
+        g.fillRect(tx - 7, ty - 18, 14, 9);
+        // Tank cap (two small circles simulate a cylinder dome)
+        g.fillCircle(tx, ty - 18, 7);
+        g.fillStyle(0x110020);
+        g.fillCircle(tx, ty - 18, 4);
+      }
     });
 
-    // Main club building (centre)
-    g.fillStyle(0x0c001e);
-    g.fillRect(W * 0.18, H * 0.04, W * 0.64, H * 0.56);
+    // ── 3. MAIN CLUB BUILDING ─────────────────────────────────────────────────
+    // Base
+    g.fillStyle(0x0a001c);
+    g.fillRect(W * 0.17, H * 0.04, W * 0.66, H * 0.56);
 
-    // Club windows — 3 rows
+    // Cornice (top trim)
+    g.fillStyle(0x1a0040);
+    g.fillRect(W * 0.17, H * 0.04, W * 0.66, H * 0.025);
+
+    // Pilasters (4 vertical columns across the facade)
+    g.fillStyle(0x0d0028);
+    const pilX = [0.19, 0.36, 0.61, 0.78];
+    pilX.forEach(px => {
+      g.fillRect(W * px, H * 0.04, W * 0.018, H * 0.56);
+    });
+
+    // Club windows — 3 rows × 6 cols, arched style
     for (let r = 0; r < 3; r++) {
-      for (let c = 0; c < 7; c++) {
-        g.fillStyle(Math.random() > 0.35 ? 0xffd060 : 0x08080e);
-        g.fillRect(W * 0.22 + c * W * 0.085, H * 0.07 + r * H * 0.07, W * 0.065, H * 0.045);
+      for (let c = 0; c < 6; c++) {
+        const wx = W * 0.215 + c * W * 0.094;
+        const wy = H * 0.075 + r * H * 0.068;
+        const ww = W * 0.05;
+        const wh = H * 0.04;
+        const lit = Math.random() > 0.4;
+        const winCol   = lit ? 0xffd060 : 0x050008;
+        const frameCol = lit ? 0xffb020 : 0x0a0018;
+        // Window body
+        g.fillStyle(winCol);
+        g.fillRect(wx, wy, ww, wh);
+        // Arch cap (small square on top simulates arch top)
+        g.fillRect(wx + ww * 0.25, wy - wh * 0.25, ww * 0.5, wh * 0.28);
+        // Inner frame
+        g.lineStyle(1, frameCol);
+        g.strokeRect(wx, wy, ww, wh);
       }
     }
 
-    // Club entrance arch
+    // Marquee above entrance
+    g.fillStyle(0x1a0040);
+    g.fillRect(W * 0.20, H * 0.355, W * 0.60, H * 0.025);
+    g.lineStyle(2, GOLD, 0.9);
+    g.strokeRect(W * 0.20, H * 0.355, W * 0.60, H * 0.025);
+
+    // ── 4. CLUB ENTRANCE ──────────────────────────────────────────────────────
+    // Warm light emanating from inside (glow behind arch)
+    g.fillStyle(0xff8800, 0.18);
+    g.fillRect(W * 0.38, H * 0.40, W * 0.24, H * 0.20);
+    g.fillStyle(0xff8800, 0.08);
+    g.fillCircle(W * 0.50, H * 0.42, W * 0.11);
+
+    // Arch base rectangle
     g.fillStyle(DARK);
-    g.fillRect(W * 0.36, H * 0.36, W * 0.28, H * 0.24);
-    g.lineStyle(3, GOLD);
-    g.strokeRect(W * 0.36, H * 0.36, W * 0.28, H * 0.24);
+    g.fillRect(W * 0.37, H * 0.40, W * 0.26, H * 0.20);
+    // Arch top — filled semicircle (approximated with a circle clipped by the rect)
+    g.fillCircle(W * 0.50, H * 0.40, W * 0.13);
+
+    // Gold arch outline
+    g.lineStyle(3, GOLD, 1);
+    g.strokeRect(W * 0.37, H * 0.40, W * 0.26, H * 0.20);
+    // Gold arch top stroke
+    g.beginPath();
+    g.arc(W * 0.50, H * 0.40, W * 0.13, Math.PI, 0, false);
+    g.strokePath();
 
     // Door panels
     g.fillStyle(0x1a0830);
-    g.fillRect(W * 0.37, H * 0.37, W * 0.12, H * 0.22);
-    g.fillRect(W * 0.51, H * 0.37, W * 0.12, H * 0.22);
+    g.fillRect(W * 0.38, H * 0.41, W * 0.115, H * 0.185);
+    g.fillRect(W * 0.505, H * 0.41, W * 0.115, H * 0.185);
     g.lineStyle(1, 0x3a1860);
-    g.strokeRect(W * 0.37, H * 0.37, W * 0.12, H * 0.22);
-    g.strokeRect(W * 0.51, H * 0.37, W * 0.12, H * 0.22);
+    g.strokeRect(W * 0.38, H * 0.41, W * 0.115, H * 0.185);
+    g.strokeRect(W * 0.505, H * 0.41, W * 0.115, H * 0.185);
 
-    // Sidewalk
-    g.fillStyle(0x0c0c0c);
+    // Door handles
+    g.fillStyle(GOLD, 0.9);
+    g.fillCircle(W * 0.493, H * 0.50, 3);
+    g.fillCircle(W * 0.507, H * 0.50, 3);
+
+    // Steps (3 lines)
+    g.lineStyle(1, 0x282828);
+    g.strokeLineShape(new Phaser.Geom.Line(W * 0.37, H * 0.600, W * 0.63, H * 0.600));
+    g.strokeLineShape(new Phaser.Geom.Line(W * 0.38, H * 0.605, W * 0.62, H * 0.605));
+    g.strokeLineShape(new Phaser.Geom.Line(W * 0.39, H * 0.610, W * 0.61, H * 0.610));
+
+    // Red carpet
+    g.fillStyle(0x5a0010, 1);
+    g.fillRect(W * 0.45, H * 0.60, W * 0.10, H * 0.05);
+
+    // ── 5. SIDEWALK ───────────────────────────────────────────────────────────
+    // Base asphalt
+    g.fillStyle(0x0a0a0a);
     g.fillRect(0, H * 0.60, W, H * 0.40);
 
-    // Sidewalk lines
+    // Textured stripes
+    for (let i = 0; i < 8; i++) {
+      g.fillStyle(i % 2 === 0 ? 0x0c0c0c : 0x080808);
+      g.fillRect(0, H * 0.60 + i * (H * 0.40 / 8), W, H * 0.40 / 8);
+    }
+
+    // Kerbstone / curb
+    g.fillStyle(0x1e1e1e);
+    g.fillRect(0, H * 0.60, W, 3);
+
+    // Sidewalk expansion lines
     g.lineStyle(1, 0x1a1a1a);
     for (let i = 0; i < 5; i++) {
       g.strokeLineShape(new Phaser.Geom.Line(
@@ -134,33 +232,101 @@ export class StreetScene extends Phaser.Scene {
       ));
     }
 
-    // Searchlights sweeping
+    // Lamp post (left side)
+    g.fillStyle(0x2a2a2a);
+    g.fillRect(W * 0.08 - 1, H * 0.44, 3, H * 0.17);   // pole
+    g.fillRect(W * 0.08 - 5, H * 0.44, 10, 3);          // arm bracket
+    // Lamp head
+    g.fillStyle(0xffd060, 0.9);
+    g.fillRect(W * 0.08 - 6, H * 0.42, 12, 5);
+
+    // Litter / cigarette butts
+    const litterSpots = [
+      [W * 0.14, H * 0.64], [W * 0.32, H * 0.67], [W * 0.55, H * 0.65],
+      [W * 0.68, H * 0.63], [W * 0.85, H * 0.68],
+    ];
+    g.fillStyle(0x333333);
+    litterSpots.forEach(([lx, ly]) => g.fillRect(lx, ly, 2, 1));
+
+    // Searchlights
     g.fillStyle(0xffffff, 0.04);
     g.fillTriangle(W * 0.12, H * 0.60, 0, 0, W * 0.22, 0);
     g.fillStyle(0xffffff, 0.03);
     g.fillTriangle(W * 0.88, H * 0.60, W * 0.76, 0, W, 0);
 
     // Limo parked right
-    this.drawLimo(g, W * 0.72, H * 0.66);
+    this.drawLimo(g, W * 0.68, H * 0.655);
   }
 
   drawLimo(g, x, y) {
-    // Body
-    g.fillStyle(0x0a0a0a);
-    g.fillRect(x, y - 12, 90, 18);
-    g.fillRect(x + 14, y - 22, 58, 12);
-    // Windows
-    g.fillStyle(0x1a2a3a);
-    for (let i = 0; i < 3; i++) {
-      g.fillRect(x + 18 + i * 18, y - 20, 14, 9);
-    }
-    // Wheels
+    // Shadow under car
+    g.fillStyle(0x000000, 0.45);
+    g.fillRect(x - 2, y + 6, 110, 5);
+
+    // ── Lower body (main chassis) ──
+    g.fillStyle(0x0d0d0d);
+    g.fillRect(x, y - 10, 100, 16);
+
+    // ── Upper cabin ──
     g.fillStyle(0x111111);
-    g.fillCircle(x + 18, y + 7, 8);
-    g.fillCircle(x + 72, y + 7, 8);
-    g.fillStyle(0x333333);
-    g.fillCircle(x + 18, y + 7, 5);
-    g.fillCircle(x + 72, y + 7, 5);
+    g.fillRect(x + 10, y - 20, 68, 11);
+
+    // Chrome outline — chassis
+    g.lineStyle(1, 0x3a3a3a, 0.9);
+    g.strokeRect(x, y - 10, 100, 16);
+    // Chrome outline — cabin
+    g.strokeRect(x + 10, y - 20, 68, 11);
+
+    // Chrome molding (horizontal mid-line)
+    g.lineStyle(1, 0x555555, 0.7);
+    g.strokeLineShape(new Phaser.Geom.Line(x + 2, y - 2, x + 98, y - 2));
+
+    // ── Windows (4) ──
+    g.fillStyle(0x0a1520);
+    g.fillRect(x + 13, y - 19, 14, 9);
+    g.fillRect(x + 30, y - 19, 14, 9);
+    g.fillRect(x + 47, y - 19, 14, 9);
+    g.fillRect(x + 64, y - 19, 14, 9);
+    // Window frames
+    g.lineStyle(1, 0x1e2a38);
+    g.strokeRect(x + 13, y - 19, 14, 9);
+    g.strokeRect(x + 30, y - 19, 14, 9);
+    g.strokeRect(x + 47, y - 19, 14, 9);
+    g.strokeRect(x + 64, y - 19, 14, 9);
+
+    // ── Hood / front section ──
+    g.fillStyle(0x0d0d0d);
+    g.fillRect(x + 92, y - 14, 14, 10);
+    g.lineStyle(1, 0x3a3a3a);
+    g.strokeRect(x + 92, y - 14, 14, 10);
+
+    // ── Headlights (front, 2) ──
+    g.fillStyle(0xffd080, 0.95);
+    g.fillRect(x + 98, y - 12, 5, 3);
+    g.fillRect(x + 98, y - 7,  5, 3);
+
+    // ── Tail lights (rear, 2) ──
+    g.fillStyle(0xff1010, 0.9);
+    g.fillRect(x - 3, y - 10, 4, 4);
+    g.fillRect(x - 3, y - 5,  4, 4);
+
+    // ── Licence plate (rear) ──
+    g.fillStyle(0xddddcc);
+    g.fillRect(x - 2, y + 1, 10, 4);
+
+    // ── Wheels (4 — two axles) ──
+    const wheelPositions = [x + 16, x + 40, x + 62, x + 86];
+    wheelPositions.forEach(wx => {
+      // Tyre
+      g.fillStyle(0x111111);
+      g.fillCircle(wx, y + 7, 8);
+      // Rim
+      g.fillStyle(0x404040);
+      g.fillCircle(wx, y + 7, 5);
+      // Chrome hub
+      g.fillStyle(0xaaaaaa);
+      g.fillCircle(wx, y + 7, 2);
+    });
   }
 
   buildNeonSign(W, H) {
