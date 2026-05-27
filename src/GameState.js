@@ -51,7 +51,7 @@ export const GameState = {
   // Character memory — drives epilogue fate generation
   characterMemory: {
     arnie: { trustLevel: 0, betrayed: false },       // trust +1 per correct stash call
-    collins: { bribeCount: 0, refusedCount: 0, hostile: false },
+    collins: { bribeCount: 0, refusedCount: 0, hostile: false, met: false },
     hughes: { evadedCount: 0, confrontedCount: 0 },
     loveStory: false,      // set true if same anonymous NPC appeared 5+ times
     overdoseEvents: 0,     // count of unresolved drug_deal events
@@ -95,7 +95,7 @@ export const GameState = {
       epoch: 70, epochNight: 1, epochsCompleted: [],
       characterMemory: {
         arnie: { trustLevel: 0, betrayed: false },
-        collins: { bribeCount: 0, refusedCount: 0, hostile: false },
+        collins: { bribeCount: 0, refusedCount: 0, hostile: false, met: false },
         hughes: { evadedCount: 0, confrontedCount: 0 },
         loveStory: false, overdoseEvents: 0, traitor: null,
       },

@@ -37,6 +37,7 @@ export class NightScene extends Phaser.Scene {
     this.nightEvents      = [];
     this.eventPending     = false;
     this.tutorialStep     = 0;
+    this.raidInProgress   = false;
   }
 
   create() {
@@ -69,6 +70,9 @@ export class NightScene extends Phaser.Scene {
     if (GameState.nightNumber === 1 && !GameState.flags.tutorialDone) {
       this.buildTutorial(W, H);
     }
+
+    // Schedule recurring character appearances
+    this.scheduleCollinsAppearance(L);
   }
 
   // ─── BACKGROUND ────────────────────────────────────────────────────────────
@@ -516,6 +520,10 @@ export class NightScene extends Phaser.Scene {
      this.guestStateTxt, this.guestDescTxt, this.warningTxt].forEach(t =>
       this.cardContainer.add(t));
 
+    // Subtle fake-ID visual hint (night 4+): faint worn/yellow tint over age field
+    this.fakeIdHintG = this.add.graphics().setVisible(false);
+    this.cardContainer.add(this.fakeIdHintG);
+
     // Stamp
     this.stampTxt = this.add.text(0, 0, '', {
       fontFamily: '"Press Start 2P", monospace',
@@ -560,6 +568,22 @@ export class NightScene extends Phaser.Scene {
     this.warningTxt.setText(warns.join('  '));
 
     this.stampTxt.setText('');
+
+    // Night 4+: subtle visual hint that the ID might be tampered
+    this.fakeIdHintG.clear().setVisible(false);
+    if (guest.hasFakeId && GameState.nightNumber >= 4) {
+      const ch = this.cardH;
+      const cw = this.cardW;
+      const tx = this.portraitOffX + this.portraitW / 2 + 12;
+      // Faint yellow tint over the age line
+      this.fakeIdHintG.fillStyle(0xffee00, 0.10);
+      this.fakeIdHintG.fillRect(tx - 4, -ch / 2 + 32, cw * 0.45, 18);
+      // Tiny "ink bleed" dot near birthdate — suggests reprinted card
+      this.fakeIdHintG.fillStyle(0x442200, 0.30);
+      this.fakeIdHintG.fillRect(tx + cw * 0.38, -ch / 2 + 36, 3, 3);
+      this.fakeIdHintG.setVisible(true);
+    }
+
     this.drawPortrait(guest);
   }
 
@@ -985,11 +1009,41 @@ export class NightScene extends Phaser.Scene {
     this.maybeFireEvent(L);
   }
 
+  scheduleCollinsAppearance(L) {
+    const n  = GameState.nightNumber;
+    const cm = GameState.characterMemory.collins;
+    const collinsEv = NIGHT_EVENTS.find(e => e.id === 'corrupt_cop');
+    if (!collinsEv) return;
+
+    if (n === 3 && !cm.met) {
+      // First meeting — guaranteed after 18 s
+      this.time.delayedCall(18000, () => {
+        if (!this.eventPending && !this.raidInProgress) {
+          cm.met = true;
+          this.fireEvent(collinsEv, L);
+        }
+      });
+    } else if (n === 5 && !cm.hostile) {
+      // Second meeting — 20 s in
+      this.time.delayedCall(20000, () => {
+        if (!this.eventPending && !this.raidInProgress) this.fireEvent(collinsEv, L);
+      });
+    } else if (n >= 7 && cm.hostile) {
+      // Collins snitched — FBI penalty at night start
+      this.time.delayedCall(3000, () => {
+        GameState.fbiSuspicion = Math.min(100, GameState.fbiSuspicion + 20);
+        this.updateHUD(L);
+        this.floatText(this.W / 2, this.H * 0.3, 'COLLINS SNITCHED! FBI +20%', '#ff0000', 3000);
+      });
+    }
+  }
+
   maybeFireEvent(L) {
     if (this.eventPending) return;
     const nightNum = GameState.nightNumber;
     for (const ev of NIGHT_EVENTS) {
       if (ev.unlockNight > nightNum) continue;
+      if (ev.id === 'corrupt_cop') continue; // Collins scheduled separately
       if (Math.random() < ev.chance * 0.15) { // scaled down per-guest check
         this.fireEvent(ev, L);
         return;
@@ -1098,28 +1152,70 @@ export class NightScene extends Phaser.Scene {
   }
 
   triggerFBIRaid(L) {
+    if (this.raidInProgress) return;
+    this.raidInProgress = true;
     if (!GameState.flags.firstRaidSeen) GameState.flags.firstRaidSeen = true;
-    const seized = GameState.stash;
-    GameState.stash = 0;
-    GameState.fbiSuspicion = Math.max(0, GameState.fbiSuspicion - 40);
 
     AudioSystem.playAlarm();
-    AudioSystem.stop();
-    this.clockEvent.remove();
-    this.barEvent.remove();
-    this.guestSpawnTimer?.remove();
-    this.celebTimers.forEach(t => t?.remove());
+    this.eventPending = true;
+    GameState.nightEarnings = this.velvetBox;
 
-    this.floatText(this.W / 2, this.H * 0.5, `${L.ev_fbi_raid}\n${L.ev_confiscated}: -$${seized}`, '#ff0000', 3000);
+    const raidEvent = {
+      id: 'fbi_raid_live',
+      title_safe: { ru: '🔦 АГЕНТЫ У ДВЕРИ', en: '🔦 AGENTS AT THE DOOR' },
+      body_safe: {
+        ru: 'Двое в костюмах. Федеральные значки.\nВремя решать быстро.',
+        en: 'Two men in suits. Federal badges.\nDecide fast.',
+      },
+      choices: [
+        { key: 'open',  label: { ru: 'ОТКРЫТЬ ДВЕРЬ',  en: 'OPEN THE DOOR'  } },
+        { key: 'stall', label: { ru: 'ТЯНУТЬ ВРЕМЯ',   en: 'STALL FOR TIME' } },
+      ],
+      resolve(choice, gs) {
+        if (choice === 'open') {
+          const seized = gs.stash;
+          gs.stash = 0;
+          gs.fbiSuspicion = Math.max(0, gs.fbiSuspicion - 30);
+          return {
+            msg: seized > 0 ? `SEIZED: -$${seized}. SUSPICION ↓` : 'NOTHING FOUND. SUSPICION ↓',
+            ok: false, seized,
+          };
+        }
+        // Stall — 45 % they leave early
+        if (Math.random() < 0.45) {
+          gs.fbiSuspicion = Math.max(0, gs.fbiSuspicion - 8);
+          return { msg: 'THEY LEFT... FOR NOW.', ok: true, seized: 0 };
+        }
+        // Stall failed — forced entry
+        const seized = gs.stash;
+        gs.stash = 0;
+        gs.fbiSuspicion = Math.min(100, gs.fbiSuspicion + 20);
+        return { msg: `FORCED ENTRY! SEIZED: -$${seized}`, ok: false, seized };
+      },
+    };
 
-    this.time.delayedCall(3200, () => {
-      this.saveNightResult(0, seized);
-      if (this.velvetBox <= 0 && GameState.stash <= 0) {
-        GameState.bankrupt = true;
-        this.scene.start('GameOver', { reason: 'fbi' });
-      } else {
-        this.scene.start('EndNight');
-      }
+    this.scene.launch('EventPopup', {
+      event: raidEvent,
+      onClose: (result) => {
+        this.velvetBox = GameState.nightEarnings;
+        this.eventPending = false;
+        AudioSystem.stop();
+        this.clockEvent?.remove();
+        this.barEvent?.remove();
+        this.guestSpawnTimer?.remove();
+        this.celebTimers.forEach(t => t?.remove());
+
+        const seized = result?.seized || 0;
+        this.time.delayedCall(300, () => {
+          this.saveNightResult(0, seized);
+          if (this.velvetBox <= 0 && GameState.stash <= 0) {
+            GameState.bankrupt = true;
+            this.scene.start('GameOver', { reason: 'fbi' });
+          } else {
+            this.scene.start('EndNight');
+          }
+        });
+      },
     });
   }
 
