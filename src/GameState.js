@@ -42,11 +42,33 @@ export const GameState = {
     celebsHosted: [],
   },
 
+  // Epoch system — which decade we're in
+  epoch: 70,               // 70 | 80 | 90 | 2000
+  epochNight: 1,           // night within the current epoch (resets on epoch change)
+  epochsCompleted: [],     // [70, 80, ...] epochs fully played
+
+  // Character memory — drives epilogue fate generation
+  characterMemory: {
+    arnie: { trustLevel: 0, betrayed: false },       // trust +1 per correct stash call
+    collins: { bribeCount: 0, refusedCount: 0, hostile: false },
+    hughes: { evadedCount: 0, confrontedCount: 0 },
+    loveStory: false,      // set true if same anonymous NPC appeared 5+ times
+    overdoseEvents: 0,     // count of unresolved drug_deal events
+    traitor: null,         // 'arnie' | 'collins' | null
+  },
+
+  // Concert system stub
+  bookedConcert: null,     // { artistId, nightOffset, advancePaid } or null
+  concertHistory: [],      // [{ artistId, income, success, night, epoch }]
+
   // Unlocked content flags
   flags: {
     tutorialDone: false,
     firstCelebSeen: false,
     firstRaidSeen: false,
+    epilogue70Seen: false,
+    epilogue80Seen: false,
+    epilogue90Seen: false,
   },
 
   // Monetisation stubs — populated when IAP is wired up
@@ -69,7 +91,16 @@ export const GameState = {
       fbiSuspicion: 0, policeHeat: 0, reputation: 50,
       upgrades: { sound: 0, bar: 0, security: 0, lights: 0, vipLounge: 0 },
       nightStats: { approved: 0, rejected: 0, fights: 0, policeVisits: 0, underageSlipped: 0, celebsHosted: [] },
-      flags: { tutorialDone: false, firstCelebSeen: false, firstRaidSeen: false },
+      epoch: 70, epochNight: 1, epochsCompleted: [],
+      characterMemory: {
+        arnie: { trustLevel: 0, betrayed: false },
+        collins: { bribeCount: 0, refusedCount: 0, hostile: false },
+        hughes: { evadedCount: 0, confrontedCount: 0 },
+        loveStory: false, overdoseEvents: 0, traitor: null,
+      },
+      bookedConcert: null, concertHistory: [],
+      flags: { tutorialDone: false, firstCelebSeen: false, firstRaidSeen: false,
+               epilogue70Seen: false, epilogue80Seen: false, epilogue90Seen: false },
     });
   },
 
