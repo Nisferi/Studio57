@@ -92,7 +92,7 @@ export const ARNIE_LINES = [
   },
   {
     id: 'broke',
-    condition: gs => gs.velvetBox + gs.stash < 200,
+    condition: gs => gs.nightNumber > 1 && gs.velvetBox + gs.stash < 200,
     priority: 9,
     portrait: 'scared',
     text: {

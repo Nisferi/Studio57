@@ -44,7 +44,7 @@ export class MenuScene extends Phaser.Scene {
     // START button
     this.makeBtn(W / 2, H * 0.56, 200, 46, L.menu_start, 0x006620, 0x009940, () => {
       GameState.resetNightStats();
-      this.scene.start('Night');
+      this.scene.start('Street');
     });
 
     // OFFICE button
