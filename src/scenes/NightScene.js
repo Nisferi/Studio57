@@ -73,6 +73,11 @@ export class NightScene extends Phaser.Scene {
 
     // Schedule recurring character appearances
     this.scheduleCollinsAppearance(L);
+
+    // Night 4 rule change announcement
+    if (GameState.nightNumber === 4) {
+      this.showNightRulesOverlay(W, H, L);
+    }
   }
 
   // ─── BACKGROUND ────────────────────────────────────────────────────────────
@@ -378,6 +383,11 @@ export class NightScene extends Phaser.Scene {
       fontSize: '8px', color: '#ffd700',
     }).setDepth(51);
 
+    this.queueTxt = this.add.text(8, 42, '', {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '7px', color: '#aaaaaa',
+    }).setDepth(51);
+
     // Timer
     this.timerText = this.add.text(W / 2, 6, `${L.shift}: ${NIGHT_DURATION}`, {
       fontFamily: '"Press Start 2P", monospace',
@@ -441,6 +451,9 @@ export class NightScene extends Phaser.Scene {
 
     if (this.timeLeft <= 10) this.timerText.setColor('#ff4040');
     if (fbiPct > 0.7) this.fbiBar.setFillStyle(0xff0000);
+
+    const qLen = this.guestQueue ? this.guestQueue.length : 0;
+    if (this.queueTxt) this.queueTxt.setText(qLen > 0 ? `▼ ${qLen} waiting` : '');
   }
 
   // ─── GUEST CARD ─────────────────────────────────────────────────────────────
@@ -944,18 +957,24 @@ export class NightScene extends Phaser.Scene {
     if (guest.intox === INTOX.WASTED) {
       const fc = this.slyInClub ? 0 : this.fightChance;
       if (Math.random() < fc) {
-        const dmg = 300;
-        this.velvetBox = Math.max(0, this.velvetBox - dmg);
-        this.fines += dmg;
-        GameState.policeHeat = Math.min(100, GameState.policeHeat + 10);
-        GameState.nightStats.fights++;
-        this.showEvent(L.ev_fight, `-$${dmg}`, '#ff6600');
+        if (GameState.upgrades.security === 0 && !this.eventPending && Math.random() < 0.5) {
+          // No security: brawl spills to street — popup event
+          this.fireBrawlEvent(L);
+        } else {
+          const dmg = 300;
+          this.velvetBox = Math.max(0, this.velvetBox - dmg);
+          this.fines += dmg;
+          GameState.policeHeat = Math.min(100, GameState.policeHeat + 10);
+          GameState.nightStats.fights++;
+          this.showEvent(L.ev_fight, `-$${dmg}`, '#ff6600');
+        }
       }
     }
 
-    // Reputation damage from trashy guest
+    // Reputation damage from trashy guest (stricter on Night 4+)
     if (guest.style === STYLE.TRASHY) {
-      GameState.reputation = Math.max(0, GameState.reputation - 2);
+      const repDmg = GameState.nightNumber >= 4 ? 3 : 2;
+      GameState.reputation = Math.max(0, GameState.reputation - repDmg);
     }
 
     // Celebrity effects
@@ -1058,6 +1077,11 @@ export class NightScene extends Phaser.Scene {
     this.scene.launch('EventPopup', { event: ev, onClose: (result) => {
       // Pull changes back from event
       this.velvetBox = GameState.nightEarnings;
+      if (result?.dmgToVelvet) {
+        this.velvetBox = Math.max(0, this.velvetBox - result.dmgToVelvet);
+        this.fines += result.dmgToVelvet;
+        GameState.nightStats.fights++;
+      }
       this.eventPending = false;
       this.updateHUD(L);
       if (result?.msg) {
@@ -1065,6 +1089,41 @@ export class NightScene extends Phaser.Scene {
         this.floatText(this.W / 2, this.H * 0.45, result.msg, color, 2000);
       }
     }});
+  }
+
+  fireBrawlEvent(L) {
+    const brawlEvent = {
+      id: 'brawl_at_entrance',
+      title_safe: { ru: '⚔ ДРАКА У ВХОДА', en: '⚔ BRAWL AT ENTRANCE' },
+      body_safe: {
+        ru: 'Пьяный Кевин лезет к Тони. Охраны нет. Улица смотрит.',
+        en: "Drunk Kevin swings at Tony. No bouncer. The street is watching.",
+      },
+      choices: [
+        { key: 'intervene', label: { ru: 'ВМЕШАТЬСЯ САМОМУ', en: 'STEP IN YOURSELF' } },
+        { key: 'call_cops', label: { ru: 'ВЫЗВАТЬ ПОЛИЦИЮ',  en: 'CALL THE COPS'    } },
+        { key: 'ignore',    label: { ru: 'ЗАКРЫТЬ ДВЕРЬ',    en: 'CLOSE THE DOOR'   } },
+      ],
+      resolve(choice, gs) {
+        if (choice === 'intervene') {
+          gs.reputation = Math.max(0, gs.reputation - 3);
+          gs.policeHeat = Math.min(100, gs.policeHeat + 5);
+          return { msg: 'You broke it up. REP -3.', ok: true };
+        }
+        if (choice === 'call_cops') {
+          gs.policeHeat = Math.min(100, gs.policeHeat + 25);
+          gs.fbiSuspicion = Math.min(100, gs.fbiSuspicion + 5);
+          return { msg: 'Cops arrived. HEAT +25.', ok: false };
+        }
+        // ignore — brawl escalates
+        const dmg = 500;
+        gs.reputation = Math.max(0, gs.reputation - 5);
+        gs.policeHeat = Math.min(100, gs.policeHeat + 15);
+        return { msg: `Escalated! REP -5. -$${dmg}`, ok: false, dmgToVelvet: dmg };
+      },
+    };
+
+    this.fireEvent(brawlEvent, L);
   }
 
   hideMoney() {
@@ -1236,5 +1295,22 @@ export class NightScene extends Phaser.Scene {
     // Store night's gross earnings separately; EndNightScene will tax and add to velvetBox
     GameState.nightEarnings = Math.max(0, this.velvetBox);
     SaveSystem.save();
+  }
+
+  showNightRulesOverlay(W, H, L) {
+    const overlay = this.add.rectangle(W / 2, H / 2, W * 0.88, 100, 0x000000, 0.92)
+      .setStrokeStyle(2, 0xffd700).setDepth(100);
+    const title = this.add.text(W / 2, H / 2 - 30, '⚠ NEW RULES TONIGHT', {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '9px', color: '#ffd700',
+    }).setOrigin(0.5).setDepth(101);
+    const body = this.add.text(W / 2, H / 2, '21+ ENTRY  |  STRICT DRESS CODE\nFake IDs are common tonight.', {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '7px', color: '#ffffff',
+      align: 'center', lineSpacing: 6,
+    }).setOrigin(0.5, 0).setDepth(101);
+    this.time.delayedCall(3500, () => {
+      overlay.destroy(); title.destroy(); body.destroy();
+    });
   }
 }
