@@ -16,7 +16,7 @@ import {
   FBI_RAID_THRESHOLD, FBI_RAID_TICK_CHANCE,
 } from '../data/tuning.js';
 
-const DARK    = 0x1C1430;
+const DARK    = 0x241848;
 const GOLD    = 0xffd700;
 const CREAM   = 0xf5e6c8;
 const GREEN   = 0x00CC44;

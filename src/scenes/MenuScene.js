@@ -4,7 +4,7 @@ import { SaveSystem } from '../SaveSystem.js';
 import { LOCALES } from '../data/locales.js';
 import { PixelUI } from '../systems/PixelUI.js';
 
-const DARK = 0x020008;
+const DARK = 0x0a0838;
 
 export class MenuScene extends Phaser.Scene {
   constructor() { super({ key: 'Menu' }); }
@@ -31,13 +31,13 @@ export class MenuScene extends Phaser.Scene {
   drawSky(W, H) {
     const g = this.add.graphics();
 
-    // Retrowave night gradient — rich purple-navy, not near-black
+    // Retrowave night gradient — vivid purple-blue, visible and bright
     const bands = [
-      [0,          0x060020],
-      [H * 0.08,   0x0c0042],
-      [H * 0.16,   0x160062],
-      [H * 0.24,   0x200082],
-      [H * 0.32,   0x2c0098],
+      [0,          0x14094e],
+      [H * 0.08,   0x201272],
+      [H * 0.16,   0x2e1a9a],
+      [H * 0.24,   0x3c22bc],
+      [H * 0.32,   0x4a2ad8],
     ];
     bands.forEach(([y, col], i) => {
       const nextY = bands[i + 1] ? bands[i + 1][0] : H * 0.40;
@@ -45,11 +45,13 @@ export class MenuScene extends Phaser.Scene {
       g.fillRect(0, y, W, nextY - y);
     });
 
-    // City-light horizon haze — magenta/violet glow
-    g.fillStyle(0xcc00ff, 0.16);
+    // City-light horizon haze — magenta/violet glow (stronger)
+    g.fillStyle(0xcc00ff, 0.26);
     g.fillRect(0, H * 0.29, W, H * 0.12);
-    g.fillStyle(0xff0088, 0.09);
+    g.fillStyle(0xff0088, 0.18);
     g.fillRect(0, H * 0.34, W, H * 0.07);
+    g.fillStyle(0xff44cc, 0.10);
+    g.fillRect(0, H * 0.36, W, H * 0.05);
 
     // Stars — three colour types; large ones get a cross-sparkle
     this.starGraphics = this.add.graphics().setDepth(1);
@@ -91,20 +93,20 @@ export class MenuScene extends Phaser.Scene {
     const g = this.add.graphics().setDepth(2);
 
     // Distant skyline gradient (fog)
-    g.fillStyle(0x100028, 0.6);
+    g.fillStyle(0x1a0048, 0.5);
     g.fillRect(0, H * 0.22, W, H * 0.14);
 
-    // Background buildings
+    // Background buildings — visible deep purple, not near-black
     const bgBldgs = [
-      { x: 0.00, w: 0.07, h: 0.34, col: 0x0e0135 },
-      { x: 0.07, w: 0.05, h: 0.22, col: 0x090128 },
-      { x: 0.11, w: 0.09, h: 0.40, col: 0x120248 },
-      { x: 0.63, w: 0.10, h: 0.28, col: 0x0b0135 },
-      { x: 0.74, w: 0.07, h: 0.38, col: 0x110248 },
-      { x: 0.82, w: 0.08, h: 0.26, col: 0x090128 },
-      { x: 0.91, w: 0.09, h: 0.33, col: 0x0e0135 },
+      { x: 0.00, w: 0.07, h: 0.34, col: 0x1c0a62 },
+      { x: 0.07, w: 0.05, h: 0.22, col: 0x160848 },
+      { x: 0.11, w: 0.09, h: 0.40, col: 0x220e80 },
+      { x: 0.63, w: 0.10, h: 0.28, col: 0x1a0860 },
+      { x: 0.74, w: 0.07, h: 0.38, col: 0x200c78 },
+      { x: 0.82, w: 0.08, h: 0.26, col: 0x160848 },
+      { x: 0.91, w: 0.09, h: 0.33, col: 0x1c0a62 },
     ];
-    const winPalette = [0xffd050, 0x80d8ff, 0x88ff70, 0x060018];
+    const winPalette = [0xffd050, 0x80d8ff, 0x88ff70, 0x0c0040];
     bgBldgs.forEach(b => {
       g.fillStyle(b.col);
       g.fillRect(W * b.x, H * (0.30 - b.h), W * b.w, H * b.h + 2);
@@ -133,24 +135,24 @@ export class MenuScene extends Phaser.Scene {
     const bX = W * 0.17; const bY = H * 0.07;
     const bW = W * 0.66; const bH = H * 0.50;
 
-    // Building body — slightly desaturated purple-black
-    g.fillStyle(0x0e0035);
+    // Building body — rich deep purple (not near-black)
+    g.fillStyle(0x1a0868);
     g.fillRect(bX, bY, bW, bH);
 
     // Cornice ornament (top band)
-    g.fillStyle(0x220066);
+    g.fillStyle(0x3010a0);
     g.fillRect(bX, bY, bW, H * 0.022);
-    g.lineStyle(2, 0xffd700, 0.7);
+    g.lineStyle(2, 0xffd700, 0.8);
     g.strokeRect(bX + 2, bY + 2, bW - 4, H * 0.022 - 4);
 
     // Decorative horizontal bands
-    g.fillStyle(0x1a0055, 0.85);
+    g.fillStyle(0x280888, 0.85);
     g.fillRect(bX, bY + bH * 0.32, bW, 3);
     g.fillRect(bX, bY + bH * 0.60, bW, 3);
 
     // Side pilasters
     [0.19, 0.36, 0.61, 0.78].forEach(px => {
-      g.fillStyle(0x0d001e);
+      g.fillStyle(0x130548);
       g.fillRect(W * px, bY, W * 0.016, bH);
       // Pilaster highlight
       g.fillStyle(0xffffff, 0.04);
@@ -300,7 +302,7 @@ export class MenuScene extends Phaser.Scene {
 
   drawCrowd(W, H) {
     const groundY = H * 0.82;
-    const CROWD = [0x8800b0, 0xa04010, 0x0055b0, 0x505090, 0x808020, 0x204870, 0xaa0050, 0x006055];
+    const CROWD = [0xcc00e8, 0xd05010, 0x0080e0, 0x7060c8, 0xb0b030, 0x2870b0, 0xe00080, 0x00a888];
 
     // Create crowd figure containers for bobbing
     this.crowdFigures = [];

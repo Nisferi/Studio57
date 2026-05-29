@@ -10,12 +10,12 @@ import { getArnieLine } from '../data/arnie_lines.js';
 import { AudioSystem } from '../systems/AudioSystem.js';
 import { PixelUI } from '../systems/PixelUI.js';
 
-const DARK  = 0x020008;
+const DARK  = 0x0a0838;
 const GOLD  = 0xffd700;
-const PINK  = 0xff00a0;
+const PINK  = 0xff00cc;
 
-// Crowd silhouette palette
-const CROWD_COLORS = [0x7800a8, 0x903010, 0x0055a8, 0x484488, 0x707020, 0x185060];
+// Crowd silhouette palette — vivid retrowave hues
+const CROWD_COLORS = [0xa000d8, 0xc04010, 0x0070d0, 0x6060b8, 0x909030, 0x207080];
 
 export class StreetScene extends Phaser.Scene {
   constructor() { super({ key: 'Street' }); }
@@ -53,14 +53,16 @@ export class StreetScene extends Phaser.Scene {
     const g = this.add.graphics();
 
     // ── 1. NIGHT SKY ──────────────────────────────────────────────────────────
-    g.fillGradientStyle(0x06001e, 0x06001e, 0x1e0060, 0x1e0060, 1);
+    g.fillGradientStyle(0x150a52, 0x150a52, 0x2c1890, 0x2c1890, 1);
     g.fillRect(0, 0, W, H);
 
-    // Horizon glow — two-layer pink/violet
-    g.fillStyle(0xcc00ff, 0.18);
+    // Horizon glow — stronger three-layer pink/violet
+    g.fillStyle(0xcc00ff, 0.28);
     g.fillRect(0, H * 0.18, W, H * 0.10);
-    g.fillStyle(0xff0088, 0.09);
+    g.fillStyle(0xff0088, 0.18);
     g.fillRect(0, H * 0.22, W, H * 0.06);
+    g.fillStyle(0xff44cc, 0.12);
+    g.fillRect(0, H * 0.24, W, H * 0.04);
 
     // Stars
     for (let i = 0; i < 70; i++) {
@@ -82,14 +84,14 @@ export class StreetScene extends Phaser.Scene {
 
     // ── 2. BACKGROUND BUILDINGS ───────────────────────────────────────────────
     const buildings = [
-      { x: 0.02, w: 0.08, h: 0.38, col: 0x050010, tank: false },
-      { x: 0.10, w: 0.06, h: 0.28, col: 0x040008, tank: false },
-      { x: 0.16, w: 0.12, h: 0.44, col: 0x060014, tank: true  },
-      { x: 0.28, w: 0.05, h: 0.22, col: 0x040008, tank: false },
-      { x: 0.66, w: 0.11, h: 0.35, col: 0x050010, tank: false },
-      { x: 0.78, w: 0.07, h: 0.45, col: 0x060014, tank: true  },
-      { x: 0.86, w: 0.06, h: 0.26, col: 0x040008, tank: false },
-      { x: 0.92, w: 0.08, h: 0.32, col: 0x050010, tank: true  },
+      { x: 0.02, w: 0.08, h: 0.38, col: 0x160848, tank: false },
+      { x: 0.10, w: 0.06, h: 0.28, col: 0x100638, tank: false },
+      { x: 0.16, w: 0.12, h: 0.44, col: 0x1c0a60, tank: true  },
+      { x: 0.28, w: 0.05, h: 0.22, col: 0x100638, tank: false },
+      { x: 0.66, w: 0.11, h: 0.35, col: 0x160848, tank: false },
+      { x: 0.78, w: 0.07, h: 0.45, col: 0x1c0a60, tank: true  },
+      { x: 0.86, w: 0.06, h: 0.26, col: 0x100638, tank: false },
+      { x: 0.92, w: 0.08, h: 0.32, col: 0x160848, tank: true  },
     ];
     buildings.forEach(b => {
       g.fillStyle(b.col);
@@ -126,11 +128,11 @@ export class StreetScene extends Phaser.Scene {
 
     // ── 3. MAIN CLUB BUILDING ─────────────────────────────────────────────────
     // Base
-    g.fillStyle(0x0a001c);
+    g.fillStyle(0x180868);
     g.fillRect(W * 0.17, H * 0.04, W * 0.66, H * 0.56);
 
     // Cornice (top trim)
-    g.fillStyle(0x220055);
+    g.fillStyle(0x3010a0);
     g.fillRect(W * 0.17, H * 0.04, W * 0.66, H * 0.025);
     // Neon accent strip on cornice
     g.fillStyle(0xff00cc, 0.55);
@@ -139,7 +141,7 @@ export class StreetScene extends Phaser.Scene {
     g.fillRect(W * 0.17, H * 0.04, W * 0.66, 5);
 
     // Pilasters (4 vertical columns across the facade)
-    g.fillStyle(0x0d0028);
+    g.fillStyle(0x120548);
     const pilX = [0.19, 0.36, 0.61, 0.78];
     pilX.forEach(px => {
       g.fillRect(W * px, H * 0.04, W * 0.018, H * 0.56);
