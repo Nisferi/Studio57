@@ -574,12 +574,10 @@ export class ClubScene extends Phaser.Scene {
       const barLevel = Math.max(1, GameState.upgrades.bar + 1);
       info = `BAR LVL ${barLevel}\n$${25 * barLevel} / 5 SEC`;
     } else if (zone === ZONE.BATHROOM) {
-      const cv = GameState.contentVersion;
-      if (cv === 'adult' || cv === 'max') {
-        info = 'RESTROOM\nEvents here at night';
-      } else {
-        info = 'RESTROOM\n(safe mode)';
-      }
+      // Navigate to bathroom scene
+      this.scene.pause('Club');
+      this.scene.launch('Bathroom');
+      return;
     } else if (zone === ZONE.ENTRANCE) {
       info = `FBI: ${Math.round(GameState.fbiSuspicion)}%\nPOLICE: ${Math.round(GameState.policeHeat)}%`;
     }
