@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import { GameState } from '../GameState.js';
 import { SaveSystem } from '../SaveSystem.js';
 import { LOCALES } from '../data/locales.js';
+import { EconomySystem } from '../systems/EconomySystem.js';
+import { REP_NIGHT_END, REP_LIGHTS_BONUS } from '../data/tuning.js';
 
 const DARK = 0x020008;
 const GOLD = 0xffd700;
@@ -14,21 +16,19 @@ export class EndNightScene extends Phaser.Scene {
     const L = LOCALES[GameState.lang];
 
     // ── Calculate financials ──
-    const revenue   = GameState.nightEarnings || 0; // gross earnings from this night only
-    const taxRate   = 0.30;
-    const tax       = Math.round(revenue * taxRate);
-    const net       = revenue - tax;
+    const revenue   = GameState.nightEarnings || 0;
+    const { tax, net } = EconomySystem.calcTax(revenue);
 
     // Apply results to GameState — ADD net to accumulated velvetBox, don't replace
     GameState.velvetBox    = (GameState.velvetBox || 0) + net;
     GameState.nightEarnings = 0;
     GameState.totalEarned  = (GameState.totalEarned || 0) + net;
     GameState.totalTaxPaid = (GameState.totalTaxPaid || 0) + tax;
-    GameState.reputation   = Math.min(100, (GameState.reputation || 50) + 3);
+    GameState.reputation   = Math.min(100, (GameState.reputation || 50) + REP_NIGHT_END);
 
     // Upgrade reputation from lights
     if (GameState.upgrades.lights > 0) {
-      const bonus = [5, 12, 20][GameState.upgrades.lights - 1] || 0;
+      const bonus = REP_LIGHTS_BONUS[GameState.upgrades.lights - 1] || 0;
       GameState.reputation = Math.min(100, GameState.reputation + bonus);
     }
 

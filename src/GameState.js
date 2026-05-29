@@ -41,6 +41,7 @@ export const GameState = {
     policeVisits: 0,
     underageSlipped: 0,
     celebsHosted: [],
+    firedEventIds: [],  // deduplication: event IDs already triggered this night
   },
 
   // Epoch system — which decade we're in
@@ -94,7 +95,7 @@ export const GameState = {
       velvetBox: 0, nightEarnings: 0, stash: 0, totalEarned: 0, totalTaxPaid: 0, bankrupt: false,
       fbiSuspicion: 0, policeHeat: 0, reputation: 50,
       upgrades: { sound: 0, bar: 0, security: 0, lights: 0, vipLounge: 0 },
-      nightStats: { approved: 0, rejected: 0, fights: 0, policeVisits: 0, underageSlipped: 0, celebsHosted: [] },
+      nightStats: { approved: 0, rejected: 0, fights: 0, policeVisits: 0, underageSlipped: 0, celebsHosted: [], firedEventIds: [] },
       epoch: 70, epochNight: 1, epochsCompleted: [],
       characterMemory: {
         arnie: { trustLevel: 0, betrayed: false },
@@ -109,6 +110,6 @@ export const GameState = {
   },
 
   resetNightStats() {
-    this.nightStats = { approved: 0, rejected: 0, fights: 0, policeVisits: 0, underageSlipped: 0, celebsHosted: [] };
+    this.nightStats = { approved: 0, rejected: 0, fights: 0, policeVisits: 0, underageSlipped: 0, celebsHosted: [], firedEventIds: [] };
   },
 };

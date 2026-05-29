@@ -164,6 +164,10 @@ export const AudioSystem = {
     this.setBPM(Math.min(145, bpm + 5));
   },
 
+  resetBPM() {
+    bpm = 120;
+  },
+
   resume() {
     try {
       if (ctx && ctx.state === 'suspended') ctx.resume();

@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { GameState } from '../GameState.js';
 import { SaveSystem } from '../SaveSystem.js';
+import { ContentSystem } from '../systems/ContentSystem.js';
 
 const DARK   = 0x020008;
 const PURPLE = 0x6600cc;
@@ -80,8 +81,7 @@ const CONTENT = {
 };
 
 function getContent() {
-  const v = GameState.contentVersion || 'safe';
-  return CONTENT[v] || CONTENT.safe;
+  return ContentSystem.getVersionedBag(CONTENT);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

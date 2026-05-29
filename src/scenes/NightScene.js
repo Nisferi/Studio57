@@ -6,17 +6,20 @@ import { generateGuest, STYLE, INTOX, SKIN_PALETTES, HAIR_COLORS } from '../data
 import { CELEBRITIES } from '../data/celebrities.js';
 import { NIGHT_EVENTS } from '../data/events.js';
 import { AudioSystem } from '../systems/AudioSystem.js';
+import { EconomySystem } from '../systems/EconomySystem.js';
+import {
+  NIGHT_DURATION, GUEST_INTERVAL_MIN, GUEST_INTERVAL_MAX, BAR_TICK_MS,
+  HIDE_AMOUNT, HIDE_FBI_GAIN,
+  UNDERAGE_FINE, UNDERAGE_FBI_GAIN, UNDERAGE_POLICE_GAIN, UNDERAGE_CATCH_CHANCE,
+  FIGHT_DAMAGE, FIGHT_POLICE_GAIN,
+  FBI_RAID_THRESHOLD, FBI_RAID_TICK_CHANCE,
+} from '../data/tuning.js';
 
 const DARK    = 0x1C1430;
 const GOLD    = 0xffd700;
 const CREAM   = 0xf5e6c8;
 const GREEN   = 0x00CC44;
 const RED     = 0xCC0022;
-
-const NIGHT_DURATION = 55; // seconds per night
-const GUEST_INTERVAL_MIN = 3200;
-const GUEST_INTERVAL_MAX = 5000;
-const BAR_TICK_MS = 5000;
 
 export class NightScene extends Phaser.Scene {
   constructor() { super({ key: 'Night' }); }
@@ -28,8 +31,8 @@ export class NightScene extends Phaser.Scene {
     this.guestQueue       = [];
     this.currentGuest     = null;
     this.deciding         = false;
-    this.barMultiplier    = 1 + (GameState.upgrades.bar * 0.5);
-    this.fightChance      = Math.max(0.05, 0.5 - GameState.upgrades.security * 0.15);
+    this.barMultiplier    = EconomySystem.calcBarMultiplier(GameState.upgrades.bar);
+    this.fightChance      = EconomySystem.calcFightChance(GameState.upgrades.security);
     this.slyInClub        = false;  // Sly Steel: no fights
     this.barBoost         = 1;      // Lisa Monelli / Mini Michael
     this.ticketMultiplier = 1;      // Donald Trumpet: 3× tickets
@@ -39,7 +42,7 @@ export class NightScene extends Phaser.Scene {
     this.tutorialStep     = 0;
     this.raidInProgress   = false;
     this.pressNight       = false;
-    this.celebChanceBoost = 1;
+    this.celebChanceBoost = EconomySystem.calcCelebChanceBoost(GameState.upgrades.vipLounge);
   }
 
   create() {
@@ -1083,14 +1086,13 @@ export class NightScene extends Phaser.Scene {
     // Underage slip
     if (guest.realAge < minAge) {
       GameState.nightStats.underageSlipped++;
-      if (Math.random() < 0.40) {
-        const fine = 500;
-        this.velvetBox = Math.max(0, this.velvetBox - fine);
-        this.fines += fine;
-        GameState.fbiSuspicion = Math.min(100, GameState.fbiSuspicion + 15);
-        GameState.policeHeat   = Math.min(100, GameState.policeHeat + 20);
+      if (Math.random() < UNDERAGE_CATCH_CHANCE) {
+        this.velvetBox = Math.max(0, this.velvetBox - UNDERAGE_FINE);
+        this.fines += UNDERAGE_FINE;
+        GameState.fbiSuspicion = Math.min(100, GameState.fbiSuspicion + UNDERAGE_FBI_GAIN);
+        GameState.policeHeat   = Math.min(100, GameState.policeHeat + UNDERAGE_POLICE_GAIN);
         GameState.nightStats.policeVisits++;
-        this.showEvent(L.ev_police, `${L.ev_fine} -$${fine}`, '#ff4040');
+        this.showEvent(L.ev_police, `${L.ev_fine} -$${UNDERAGE_FINE}`, '#ff4040');
       }
     }
 
@@ -1102,12 +1104,11 @@ export class NightScene extends Phaser.Scene {
           // No security: brawl spills to street — popup event
           this.fireBrawlEvent(L);
         } else {
-          const dmg = 300;
-          this.velvetBox = Math.max(0, this.velvetBox - dmg);
-          this.fines += dmg;
-          GameState.policeHeat = Math.min(100, GameState.policeHeat + 10);
+          this.velvetBox = Math.max(0, this.velvetBox - FIGHT_DAMAGE);
+          this.fines += FIGHT_DAMAGE;
+          GameState.policeHeat = Math.min(100, GameState.policeHeat + FIGHT_POLICE_GAIN);
           GameState.nightStats.fights++;
-          this.showEvent(L.ev_fight, `-$${dmg}`, '#ff6600');
+          this.showEvent(L.ev_fight, `-$${FIGHT_DAMAGE}`, '#ff6600');
         }
       }
     }
@@ -1276,6 +1277,7 @@ export class NightScene extends Phaser.Scene {
 
   fireEvent(ev, L) {
     this.eventPending = true;
+    if (ev.id) GameState.nightStats.firedEventIds.push(ev.id);
     // Sync local night earnings so event resolve() can read/modify them
     GameState.nightEarnings = this.velvetBox;
     this.scene.launch('EventPopup', { event: ev, onClose: (result) => {
@@ -1332,16 +1334,16 @@ export class NightScene extends Phaser.Scene {
 
   hideMoney() {
     const L = LOCALES[GameState.lang];
-    if (this.velvetBox < 200) {
+    if (this.velvetBox < HIDE_AMOUNT) {
       this.floatText(this.W / 2, this.H * 0.70, 'NOT ENOUGH!', '#ff4040');
       return;
     }
-    this.velvetBox         -= 200;
-    GameState.stash        += 200;
-    GameState.fbiSuspicion  = Math.min(100, GameState.fbiSuspicion + 12);
+    this.velvetBox         -= HIDE_AMOUNT;
+    GameState.stash        += HIDE_AMOUNT;
+    GameState.fbiSuspicion  = Math.min(100, GameState.fbiSuspicion + HIDE_FBI_GAIN);
     AudioSystem.playCoins();
     this.updateHUD(L);
-    this.floatText(this.W / 2, this.H * 0.70, '-$200 → STASH', '#ff8800');
+    this.floatText(this.W / 2, this.H * 0.70, `-$${HIDE_AMOUNT} → STASH`, '#ff8800');
 
     // Advance tutorial step 2 if active
     if (this.tutorialStep === 3 && this.tutorialSteps) {
@@ -1403,7 +1405,10 @@ export class NightScene extends Phaser.Scene {
 
     // Random macro event check each second
     if (!this.eventPending && Math.random() < 0.025) {
-      const eligible = NIGHT_EVENTS.filter(e => e.unlockNight <= GameState.nightNumber);
+      const fired = GameState.nightStats.firedEventIds;
+      const eligible = NIGHT_EVENTS.filter(e =>
+        e.unlockNight <= GameState.nightNumber && !fired.includes(e.id)
+      );
       if (eligible.length) {
         const ev = eligible[Phaser.Math.Between(0, eligible.length - 1)];
         if (Math.random() < ev.chance) this.fireEvent(ev, L);
@@ -1411,7 +1416,8 @@ export class NightScene extends Phaser.Scene {
     }
 
     // FBI raid check
-    if (GameState.fbiSuspicion >= 40 && Math.random() < GameState.fbiSuspicion / 100 * 0.02) {
+    if (GameState.fbiSuspicion >= FBI_RAID_THRESHOLD &&
+        Math.random() < GameState.fbiSuspicion / 100 * FBI_RAID_TICK_CHANCE) {
       this.triggerFBIRaid(L);
     }
 
@@ -1419,8 +1425,7 @@ export class NightScene extends Phaser.Scene {
   }
 
   onBarTick() {
-    const barLevel = Math.max(1, GameState.upgrades.bar + 1);
-    const income   = Math.round(25 * barLevel * this.barBoost);
+    const income = EconomySystem.calcBarTick(GameState.upgrades.bar, this.barBoost);
     this.velvetBox += income;
     AudioSystem.playCoins();
     this.floatText(this.W * 0.75, this.H * 0.55, `BAR +$${income}`, '#40ff80', 1000);
@@ -1516,6 +1521,7 @@ export class NightScene extends Phaser.Scene {
     this.guestSpawnTimer?.remove();
     this.celebTimers.forEach(t => t?.remove());
     AudioSystem.stop();
+    AudioSystem.resetBPM();
 
     // Press night bonus/penalty
     if (this.pressNight) {
