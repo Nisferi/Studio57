@@ -15,7 +15,7 @@ const GOLD  = 0xffd700;
 const PINK  = 0xff00a0;
 
 // Crowd silhouette palette
-const CROWD_COLORS = [0x3a0050, 0x501a00, 0x001a40, 0x302030, 0x403010, 0x102030];
+const CROWD_COLORS = [0x7800a8, 0x903010, 0x0055a8, 0x484488, 0x707020, 0x185060];
 
 export class StreetScene extends Phaser.Scene {
   constructor() { super({ key: 'Street' }); }
@@ -53,12 +53,14 @@ export class StreetScene extends Phaser.Scene {
     const g = this.add.graphics();
 
     // ── 1. NIGHT SKY ──────────────────────────────────────────────────────────
-    g.fillGradientStyle(0x000005, 0x000005, 0x0a0020, 0x0a0020, 1);
+    g.fillGradientStyle(0x06001e, 0x06001e, 0x1e0060, 0x1e0060, 1);
     g.fillRect(0, 0, W, H);
 
-    // Horizon purple glow
-    g.fillStyle(0x3a0060, 0.15);
-    g.fillRect(0, H * 0.20, W, H * 0.06);
+    // Horizon glow — two-layer pink/violet
+    g.fillStyle(0xcc00ff, 0.18);
+    g.fillRect(0, H * 0.18, W, H * 0.10);
+    g.fillStyle(0xff0088, 0.09);
+    g.fillRect(0, H * 0.22, W, H * 0.06);
 
     // Stars
     for (let i = 0; i < 70; i++) {
@@ -128,8 +130,13 @@ export class StreetScene extends Phaser.Scene {
     g.fillRect(W * 0.17, H * 0.04, W * 0.66, H * 0.56);
 
     // Cornice (top trim)
-    g.fillStyle(0x1a0040);
+    g.fillStyle(0x220055);
     g.fillRect(W * 0.17, H * 0.04, W * 0.66, H * 0.025);
+    // Neon accent strip on cornice
+    g.fillStyle(0xff00cc, 0.55);
+    g.fillRect(W * 0.17, H * 0.04, W * 0.66, 2);
+    g.fillStyle(0xff00cc, 0.20);
+    g.fillRect(W * 0.17, H * 0.04, W * 0.66, 5);
 
     // Pilasters (4 vertical columns across the facade)
     g.fillStyle(0x0d0028);
@@ -210,18 +217,23 @@ export class StreetScene extends Phaser.Scene {
     g.fillRect(W * 0.45, H * 0.60, W * 0.10, H * 0.05);
 
     // ── 5. SIDEWALK ───────────────────────────────────────────────────────────
-    // Base asphalt
-    g.fillStyle(0x0a0a0a);
+    // Base asphalt — purple-tinted
+    g.fillStyle(0x0c0c1a);
     g.fillRect(0, H * 0.60, W, H * 0.40);
 
-    // Textured stripes
-    for (let i = 0; i < 8; i++) {
-      g.fillStyle(i % 2 === 0 ? 0x0c0c0c : 0x080808);
-      g.fillRect(0, H * 0.60 + i * (H * 0.40 / 8), W, H * 0.40 / 8);
+    // Retrowave perspective grid on street
+    g.lineStyle(1, 0xff00c8, 0.16);
+    const vp2 = W / 2;
+    for (let gi = 0; gi <= 7; gi++) {
+      const gy = H * 0.60 + (gi / 7) * H * 0.40;
+      g.strokeLineShape(new Phaser.Geom.Line(0, gy, W, gy));
     }
-
-    // Kerbstone / curb
-    g.fillStyle(0x1e1e1e);
+    for (let gi = 0; gi <= 12; gi++) {
+      const gx = W * (gi / 12);
+      g.strokeLineShape(new Phaser.Geom.Line(vp2, H * 0.60, gx, H));
+    }
+    // Curb neon glow
+    g.fillStyle(0x9900cc, 0.25);
     g.fillRect(0, H * 0.60, W, 3);
 
     // Sidewalk expansion lines
@@ -331,17 +343,18 @@ export class StreetScene extends Phaser.Scene {
   }
 
   buildNeonSign(W, H) {
-    const glows = ['#ff00a0', '#ff40a8', '#ff80c0'];
+    const glows = ['#ff00cc', '#ff40d4', '#ff80e0'];
     glows.forEach((c, i) => {
       this.add.text(W / 2, H * 0.17, 'STUDIO 57', {
         fontFamily: '"Press Start 2P", monospace',
-        fontSize: '20px', color: c,
-        stroke: c, strokeThickness: (3 - i) * 6,
-      }).setOrigin(0.5).setAlpha(0.15 + i * 0.25);
+        fontSize: '22px', color: c,
+        stroke: c, strokeThickness: (3 - i) * 7,
+      }).setOrigin(0.5).setAlpha(0.12 + i * 0.28);
     });
     this.neonTop = this.add.text(W / 2, H * 0.17, 'STUDIO 57', {
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: '20px', color: '#ffffff',
+      fontSize: '22px', color: '#ffffff',
+      stroke: '#ffffff', strokeThickness: 1,
     }).setOrigin(0.5);
 
     // Random neon flicker
