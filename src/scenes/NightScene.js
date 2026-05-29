@@ -90,6 +90,9 @@ export class NightScene extends Phaser.Scene {
     this.barEvent   = this.time.addEvent({ delay: BAR_TICK_MS, callback: this.onBarTick, callbackScope: this, loop: true });
     this.scheduleNextGuest();
 
+    // Night intro splash
+    this.showNightIntro(W, H);
+
     // Tutorial overlay for first night
     if (GameState.nightNumber === 1 && !GameState.flags.tutorialDone) {
       this.buildTutorial(W, H);
@@ -105,6 +108,38 @@ export class NightScene extends Phaser.Scene {
     if (GameState.nightNumber === 4) {
       this.showNightRulesOverlay(W, H, L);
     }
+  }
+
+  showNightIntro(W, H) {
+    const overlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.85).setDepth(90);
+    const nightTxt = this.add.text(W / 2, H / 2 - 18, `NIGHT  ${GameState.nightNumber}`, {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '28px', color: '#ffd700',
+      stroke: '#000000', strokeThickness: 5,
+    }).setOrigin(0.5).setDepth(91).setAlpha(0);
+
+    const subTxt = this.add.text(W / 2, H / 2 + 24, 'NEW YORK · 1977', {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '9px', color: '#aa88ff',
+    }).setOrigin(0.5).setDepth(91).setAlpha(0);
+
+    this.tweens.add({
+      targets: [nightTxt, subTxt], alpha: 1,
+      duration: 300, ease: 'Quad.Out',
+      onComplete: () => {
+        this.time.delayedCall(900, () => {
+          this.tweens.add({
+            targets: [overlay, nightTxt, subTxt], alpha: 0,
+            duration: 400, ease: 'Quad.In',
+            onComplete: () => {
+              overlay.destroy();
+              nightTxt.destroy();
+              subTxt.destroy();
+            },
+          });
+        });
+      },
+    });
   }
 
   // ─── BACKGROUND ────────────────────────────────────────────────────────────
