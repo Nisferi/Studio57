@@ -7,11 +7,11 @@ import { CELEBRITIES } from '../data/celebrities.js';
 import { NIGHT_EVENTS } from '../data/events.js';
 import { AudioSystem } from '../systems/AudioSystem.js';
 
-const DARK    = 0x020008;
+const DARK    = 0x1C1430;
 const GOLD    = 0xffd700;
 const CREAM   = 0xf5e6c8;
-const GREEN   = 0x00aa44;
-const RED     = 0xaa0022;
+const GREEN   = 0x00CC44;
+const RED     = 0xCC0022;
 
 const NIGHT_DURATION = 55; // seconds per night
 const GUEST_INTERVAL_MIN = 3200;
@@ -91,102 +91,93 @@ export class NightScene extends Phaser.Scene {
   buildBackground(W, H) {
     const g = this.add.graphics();
 
-    // ── CEILING (top third of screen) ──────────────────────────────────────────
-    // Dark club ceiling base
-    g.fillStyle(0x03000a);
+    // ── CEILING ─────────────────────────────────────────────────────────────────
+    g.fillStyle(0x0E0A24);
     g.fillRect(0, 0, W, H * 0.28);
 
-    // Ceiling spotlight frames (left and right rigs)
-    const rigPositions = [W * 0.08, W * 0.22, W * 0.78, W * 0.92];
-    rigPositions.forEach(rx => {
-      g.fillStyle(0x221100);
-      g.fillRect(rx - 10, 2, 20, 14);
-      g.lineStyle(1, 0x443300);
-      g.strokeRect(rx - 10, 2, 20, 14);
-      // Cable to spotlight
-      g.lineStyle(1, 0x332200);
-      g.beginPath();
-      g.moveTo(rx, 0);
-      g.lineTo(rx, 16);
-      g.strokePath();
+    // Ceiling rig bar
+    g.fillStyle(0x2A1A00);
+    g.fillRect(W * 0.04, 4, W * 0.92, 10);
+    g.lineStyle(1, 0x554420);
+    g.strokeRect(W * 0.04, 4, W * 0.92, 10);
+
+    // Spotlight rigs with colored cones
+    const rigPositions  = [W * 0.12, W * 0.28, W * 0.50, W * 0.72, W * 0.88];
+    const spotRigColors = [0xFF0088, 0x0088FF, 0xFFD700, 0x00FFCC, 0xFF6600];
+    rigPositions.forEach((rx, i) => {
+      g.fillStyle(0x2A1A00);
+      g.fillRect(rx - 8, 7, 16, 13);
+      g.fillStyle(spotRigColors[i], 0.85);
+      g.fillRect(rx - 4, 14, 8, 6);
+      // Colored light cone
+      g.fillStyle(spotRigColors[i], 0.11);
+      g.fillTriangle(rx, 20, rx - 58, H * 0.53, rx + 58, H * 0.53);
     });
 
-    // Cables between rigs (horizontal wires across ceiling)
-    g.lineStyle(1, 0x1a0800);
+    // Horizontal rig wire
+    g.lineStyle(1, 0x332200, 0.7);
     g.beginPath();
-    g.moveTo(W * 0.08, 10); g.lineTo(W * 0.92, 10);
-    g.strokePath();
-    g.beginPath();
-    g.moveTo(W * 0.22, 8); g.lineTo(W * 0.78, 8);
+    g.moveTo(W * 0.04, 9); g.lineTo(W * 0.96, 9);
     g.strokePath();
 
-    // ── WALLS (middle section H*0.28 – H*0.62) ─────────────────────────────────
-    // Main wall background
-    g.fillStyle(0x08001a);
+    // ── WALLS ──────────────────────────────────────────────────────────────────
+    g.fillStyle(0x120830);
     g.fillRect(0, H * 0.28, W, H * 0.34);
 
-    // Left decorative panel — vertical alternating stripes
-    const panelColors = [0x0d0025, 0x12002e, 0x08001a, 0x150035];
+    // Side decorative wall panels
+    const panelColors = [0x1A0E42, 0x1E1248, 0x140A35, 0x1C103C];
     for (let i = 0; i < 8; i++) {
       g.fillStyle(panelColors[i % panelColors.length]);
       g.fillRect(i * W * 0.04, H * 0.28, W * 0.04, H * 0.34);
-    }
-    // Right decorative panel
-    for (let i = 0; i < 8; i++) {
-      g.fillStyle(panelColors[i % panelColors.length]);
       g.fillRect(W - (i + 1) * W * 0.04, H * 0.28, W * 0.04, H * 0.34);
     }
 
-    // Center back wall (slightly lighter)
-    g.fillStyle(0x0d0030);
+    // Center back wall
+    g.fillStyle(0x180A38);
     g.fillRect(W * 0.32, H * 0.28, W * 0.36, H * 0.34);
 
-    // Stage / podium in the center of the back wall
-    g.fillStyle(0x180040);
+    // Stage podium
+    g.fillStyle(0x220858);
     g.fillRect(W * 0.38, H * 0.42, W * 0.24, H * 0.08);
-    g.lineStyle(1, 0x6600aa);
+    g.lineStyle(2, 0xAA44FF);
     g.strokeRect(W * 0.38, H * 0.42, W * 0.24, H * 0.08);
-    // Stage lip (front edge highlight)
-    g.lineStyle(2, 0x9900ff);
+    g.lineStyle(2, 0xCC66FF);
     g.beginPath();
     g.moveTo(W * 0.38, H * 0.50);
     g.lineTo(W * 0.62, H * 0.50);
     g.strokePath();
 
-    // Disco star decorations on side walls (small diamonds)
+    // Wall diamond decorations
     const starXL = [W * 0.06, W * 0.14, W * 0.09, W * 0.18];
     const starXR = [W * 0.82, W * 0.91, W * 0.86, W * 0.95];
     const starY  = [H * 0.31, H * 0.37, H * 0.44, H * 0.51];
-    const starColors = [0xff00ff, 0x00ffff, 0xffff00, 0xff8800];
+    const starColors = [0xFF44DD, 0x44CCFF, 0xFFEE22, 0xFF9922];
     starXL.forEach((sx, i) => {
-      g.fillStyle(starColors[i], 0.55);
-      const r = 4;
+      g.fillStyle(starColors[i], 0.80);
+      const r = 5;
       g.fillTriangle(sx, starY[i] - r, sx - r, starY[i] + r, sx + r, starY[i] + r);
       g.fillTriangle(sx, starY[i] + r, sx - r, starY[i] - r, sx + r, starY[i] - r);
     });
     starXR.forEach((sx, i) => {
-      g.fillStyle(starColors[(i + 2) % starColors.length], 0.55);
-      const r = 4;
+      g.fillStyle(starColors[(i + 2) % starColors.length], 0.80);
+      const r = 5;
       g.fillTriangle(sx, starY[i] - r, sx - r, starY[i] + r, sx + r, starY[i] + r);
       g.fillTriangle(sx, starY[i] + r, sx - r, starY[i] - r, sx + r, starY[i] - r);
     });
 
-    // Ambient wall glow — tinted gradient at the base of the walls
-    g.fillGradientStyle(0x000000, 0x000000, 0x1a0040, 0x1a0040, 0);
-    g.fillRect(0, H * 0.50, W * 0.30, H * 0.12);
-    g.fillGradientStyle(0x000000, 0x000000, 0x1a0040, 0x1a0040, 0);
-    g.fillRect(W * 0.70, H * 0.50, W * 0.30, H * 0.12);
+    // Wall glow
+    g.fillGradientStyle(0x000000, 0x000000, 0x280860, 0x280860, 0);
+    g.fillRect(0, H * 0.50, W * 0.28, H * 0.12);
+    g.fillGradientStyle(0x000000, 0x000000, 0x280860, 0x280860, 0);
+    g.fillRect(W * 0.72, H * 0.50, W * 0.28, H * 0.12);
 
-    // Silhouettes of background dancers (5 figures)
+    // Background dancer silhouettes
     const dancerX = [W * 0.10, W * 0.22, W * 0.50, W * 0.76, W * 0.88];
     dancerX.forEach((dx, i) => {
       const dy = H * 0.54;
-      g.fillStyle(0x000000, 0.65);
-      // Head
+      g.fillStyle(0x060020, 0.82);
       g.fillCircle(dx, dy - 22, 6);
-      // Body
       g.fillRect(dx - 5, dy - 16, 10, 16);
-      // Arms (alternating raised/lowered for pose variety)
       if (i % 2 === 0) {
         g.fillRect(dx - 12, dy - 22, 7, 4);
         g.fillRect(dx + 5,  dy - 14, 7, 4);
@@ -197,47 +188,115 @@ export class NightScene extends Phaser.Scene {
     });
 
     // ── ENTRY ARCH ──────────────────────────────────────────────────────────────
-    g.fillStyle(0x020008);
+    g.fillStyle(0x0A0525);
     g.fillRect(W * 0.33, H * 0.35, W * 0.34, H * 0.27);
-    g.lineStyle(3, 0xffd700);
+    g.lineStyle(3, 0xFFD700);
     g.strokeRect(W * 0.33, H * 0.35, W * 0.34, H * 0.27);
 
     // ── DANCE FLOOR (H*0.62 – H*0.75) ──────────────────────────────────────────
-    // Checkerboard tiles
     const tileW = Math.ceil(W / 12);
     const tileH = Math.ceil(H * 0.13 / 8);
     for (let col = 0; col < 12; col++) {
       for (let row = 0; row < 8; row++) {
         const even = (col + row) % 2 === 0;
-        g.fillStyle(even ? 0x1a0030 : 0x000010);
+        g.fillStyle(even ? 0x2E1660 : 0x100820);
         g.fillRect(col * tileW, H * 0.62 + row * tileH, tileW, tileH);
       }
     }
 
-    // Colored light blobs on dance floor
+    // Light blobs on dance floor
     const blobData = [
-      { x: W * 0.18, y: H * 0.67, r: 28, color: 0xff00ff },
-      { x: W * 0.45, y: H * 0.70, r: 22, color: 0x0066ff },
-      { x: W * 0.72, y: H * 0.66, r: 30, color: 0xffcc00 },
-      { x: W * 0.88, y: H * 0.71, r: 18, color: 0x00ffcc },
+      { x: W * 0.18, y: H * 0.67, r: 30, color: 0xFF00DD },
+      { x: W * 0.45, y: H * 0.70, r: 24, color: 0x0088FF },
+      { x: W * 0.72, y: H * 0.66, r: 32, color: 0xFFCC00 },
+      { x: W * 0.88, y: H * 0.71, r: 20, color: 0x00FFCC },
     ];
     blobData.forEach(({ x, y, r, color }) => {
-      g.fillStyle(color, 0.15);
+      g.fillStyle(color, 0.24);
       g.fillCircle(x, y, r);
     });
 
-    // Front edge of dance floor — shiny border strip
-    g.fillStyle(0x440066);
-    g.fillRect(0, H * 0.745, W, 4);
-    g.lineStyle(1, 0xcc44ff);
+    // Dance floor front edge
+    g.fillStyle(0x550088);
+    g.fillRect(0, H * 0.745, W, 5);
+    g.lineStyle(2, 0xEE66FF);
     g.beginPath();
     g.moveTo(0, H * 0.745);
     g.lineTo(W, H * 0.745);
     g.strokePath();
 
-    // ── FLOOR BELOW DANCE FLOOR ─────────────────────────────────────────────────
-    g.fillStyle(0x050005);
+    // ── DESK SURFACE (H*0.75 – H*1.0) ──────────────────────────────────────────
+    // Wood plank base
+    g.fillStyle(0x4A2A0A);
     g.fillRect(0, H * 0.75, W, H * 0.25);
+    // Plank color variation
+    const plankCols = [0x562E0C, 0x4C2A0A, 0x583012, 0x4A2A0A, 0x54300E];
+    for (let pi = 0; pi < 5; pi++) {
+      g.fillStyle(plankCols[pi]);
+      g.fillRect(pi * W * 0.22, H * 0.75, W * 0.20, H * 0.25);
+    }
+    // Plank grooves
+    g.lineStyle(1, 0x2E1808, 0.9);
+    for (let gx = W * 0.22; gx < W; gx += W * 0.22) {
+      g.beginPath(); g.moveTo(gx, H * 0.75); g.lineTo(gx, H); g.strokePath();
+    }
+    // Desk top edge highlight + shadow
+    g.fillStyle(0x6C4018);
+    g.fillRect(0, H * 0.75, W, 5);
+    g.fillStyle(0x2C1606);
+    g.fillRect(0, H * 0.755, W, 3);
+
+    // Notepad (bottom left)
+    const padX = 14; const padY = H * 0.814;
+    g.fillStyle(0x1A0A04, 0.45);
+    g.fillRect(padX + 3, padY + 3, 70, 52);
+    g.fillStyle(0xF0EBD4);
+    g.fillRect(padX, padY, 70, 52);
+    g.lineStyle(1, 0xC0AA80);
+    g.strokeRect(padX, padY, 70, 52);
+    g.lineStyle(1, 0xD8CCA8, 0.7);
+    for (let ly = padY + 10; ly < padY + 50; ly += 8) {
+      g.beginPath(); g.moveTo(padX + 4, ly); g.lineTo(padX + 66, ly); g.strokePath();
+    }
+    g.lineStyle(1, 0xFF9090, 0.55);
+    g.beginPath(); g.moveTo(padX + 14, padY + 4); g.lineTo(padX + 14, padY + 48); g.strokePath();
+    // Pencil
+    g.fillStyle(0xFFE040);
+    g.fillRect(padX + 74, padY + 4, 5, 44);
+    g.fillStyle(0xD4A000);
+    g.fillRect(padX + 74, padY + 4, 5, 7);
+    g.fillStyle(0xBBAA88);
+    g.fillRect(padX + 74, padY + 37, 5, 5);
+    g.fillStyle(0x222222);
+    g.fillRect(padX + 75, padY + 42, 3, 6);
+
+    // Walkie-talkie (bottom right)
+    const wtX = W - 68; const wtY = H * 0.804;
+    g.fillStyle(0x1A0A04, 0.40);
+    g.fillRect(wtX + 2, wtY + 2, 34, 50);
+    g.fillStyle(0x2C2C3C);
+    g.fillRect(wtX, wtY, 34, 50);
+    g.lineStyle(1, 0x484858);
+    g.strokeRect(wtX, wtY, 34, 50);
+    g.fillStyle(0x003011);
+    g.fillRect(wtX + 4, wtY + 6, 26, 16);
+    g.fillStyle(0x00EE44, 0.65);
+    g.fillRect(wtX + 6, wtY + 9, 9, 4);
+    g.fillStyle(0x007722, 0.4);
+    g.fillRect(wtX + 6, wtY + 14, 18, 4);
+    g.fillStyle(0xFF3344); g.fillCircle(wtX + 9,  wtY + 30, 4);
+    g.fillStyle(0x33EE44); g.fillCircle(wtX + 17, wtY + 30, 4);
+    g.fillStyle(0x3366FF); g.fillCircle(wtX + 25, wtY + 30, 4);
+    g.fillStyle(0x1A1A2A);
+    g.fillRect(wtX + 4, wtY + 38, 26, 8);
+    g.lineStyle(1, 0x363646, 0.8);
+    for (let sl = wtX + 7; sl < wtX + 28; sl += 4) {
+      g.beginPath(); g.moveTo(sl, wtY + 39); g.lineTo(sl, wtY + 45); g.strokePath();
+    }
+    g.fillStyle(0x606070);
+    g.fillRect(wtX + 14, wtY - 12, 4, 14);
+    g.fillStyle(0x888898);
+    g.fillRect(wtX + 14, wtY - 12, 4, 3);
 
     // ── NEON SIGN ───────────────────────────────────────────────────────────────
     this.drawNeonSign(W / 2, H * 0.13);
@@ -755,65 +814,69 @@ export class NightScene extends Phaser.Scene {
   // ─── DECISION BUTTONS ───────────────────────────────────────────────────────
 
   buildButtons(W, H, L) {
-    const btnY  = H * 0.81;
-    const bw = Math.min(W * 0.38, 140);
-    const bh = 48;
+    const btnY = H * 0.798;
+    const bw   = Math.min(W * 0.42, 158);
+    const bh   = 54;
 
-    // REJECT
-    const rejBg = this.add.rectangle(W * 0.27, btnY, bw, bh, RED)
-      .setStrokeStyle(2, 0xff4444).setInteractive().setDepth(30);
-    const rejTxt = this.add.text(W * 0.27, btnY, `✗  ${L.reject}`, {
+    // ─── REJECT ────────────────────────────────────────────────────────────────
+    const rejBg = this.add.rectangle(W * 0.26, btnY, bw, bh, RED)
+      .setStrokeStyle(3, 0xFF7777).setInteractive().setDepth(30);
+    const rejBorderG = this.add.graphics().setDepth(31);
+    rejBorderG.lineStyle(1, 0xFF4466, 0.7);
+    rejBorderG.strokeRect(W * 0.26 - bw / 2 + 5, btnY - bh / 2 + 5, bw - 10, bh - 10);
+    const rejTxt = this.add.text(W * 0.26, btnY, `✗  ${L.reject}`, {
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: '9px', color: '#ffffff',
-    }).setOrigin(0.5).setDepth(31);
-
-    rejBg.on('pointerover', () => rejBg.setFillStyle(0xdd0033));
+      fontSize: '10px', color: '#ffffff',
+      stroke: '#660011', strokeThickness: 2,
+    }).setOrigin(0.5).setDepth(32);
+    rejBg.on('pointerover', () => rejBg.setFillStyle(0xFF1133));
     rejBg.on('pointerout',  () => rejBg.setFillStyle(RED));
     rejBg.on('pointerdown', () => this.decide(false));
     rejTxt.setInteractive(); rejTxt.on('pointerdown', () => this.decide(false));
 
-    // APPROVE
-    const appBg = this.add.rectangle(W * 0.73, btnY, bw, bh, GREEN)
-      .setStrokeStyle(2, 0x44ff88).setInteractive().setDepth(30);
-    const appTxt = this.add.text(W * 0.73, btnY, `✓  ${L.approve}`, {
+    // ─── APPROVE ───────────────────────────────────────────────────────────────
+    const appBg = this.add.rectangle(W * 0.74, btnY, bw, bh, GREEN)
+      .setStrokeStyle(3, 0x77FF99).setInteractive().setDepth(30);
+    const appBorderG = this.add.graphics().setDepth(31);
+    appBorderG.lineStyle(1, 0x44EE77, 0.7);
+    appBorderG.strokeRect(W * 0.74 - bw / 2 + 5, btnY - bh / 2 + 5, bw - 10, bh - 10);
+    const appTxt = this.add.text(W * 0.74, btnY, `✓  ${L.approve}`, {
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: '9px', color: '#ffffff',
-    }).setOrigin(0.5).setDepth(31);
-
-    appBg.on('pointerover', () => appBg.setFillStyle(0x00cc55));
+      fontSize: '10px', color: '#ffffff',
+      stroke: '#004422', strokeThickness: 2,
+    }).setOrigin(0.5).setDepth(32);
+    appBg.on('pointerover', () => appBg.setFillStyle(0x00EE55));
     appBg.on('pointerout',  () => appBg.setFillStyle(GREEN));
     appBg.on('pointerdown', () => this.decide(true));
     appTxt.setInteractive(); appTxt.on('pointerdown', () => this.decide(true));
 
-    // HIDE MONEY
-    const hideBg = this.add.rectangle(W / 2, H * 0.91, 180, 36, 0x664400)
+    // ─── HIDE MONEY ────────────────────────────────────────────────────────────
+    const hideBg = this.add.rectangle(W / 2, H * 0.905, 200, 36, 0x5A3C00)
       .setStrokeStyle(2, GOLD).setInteractive().setDepth(30);
-    const hideTxt = this.add.text(W / 2, H * 0.91, `💰 ${L.hide_money}`, {
+    const hideTxt = this.add.text(W / 2, H * 0.905, `💰 ${L.hide_money}`, {
       fontFamily: '"Press Start 2P", monospace',
       fontSize: '8px', color: '#ffd700',
     }).setOrigin(0.5).setDepth(31);
-
-    hideBg.on('pointerover', () => hideBg.setFillStyle(0x885500));
-    hideBg.on('pointerout',  () => hideBg.setFillStyle(0x664400));
+    hideBg.on('pointerover', () => hideBg.setFillStyle(0x7A5200));
+    hideBg.on('pointerout',  () => hideBg.setFillStyle(0x5A3C00));
     hideBg.on('pointerdown', () => this.hideMoney());
     hideTxt.setInteractive(); hideTxt.on('pointerdown', () => this.hideMoney());
 
-    // CLUB VIEW button
-    const clubBg = this.add.rectangle(W * 0.87, H * 0.07, 72, 28, 0x1a0050)
-      .setStrokeStyle(2, 0x8844ff).setInteractive().setDepth(55);
+    // ─── CLUB VIEW ─────────────────────────────────────────────────────────────
+    const clubBg = this.add.rectangle(W * 0.87, H * 0.07, 72, 28, 0x200A60)
+      .setStrokeStyle(2, 0xAA66FF).setInteractive().setDepth(55);
     const clubTxt = this.add.text(W * 0.87, H * 0.07, '👁 CLUB', {
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: '7px', color: '#aa66ff',
+      fontSize: '7px', color: '#CC88FF',
     }).setOrigin(0.5).setDepth(56);
-    clubBg.on('pointerover',  () => clubBg.setFillStyle(0x2a0080));
-    clubBg.on('pointerout',   () => clubBg.setFillStyle(0x1a0050));
+    clubBg.on('pointerover',  () => clubBg.setFillStyle(0x300C80));
+    clubBg.on('pointerout',   () => clubBg.setFillStyle(0x200A60));
     clubBg.on('pointerdown',  () => this.openClubView());
     clubTxt.setInteractive(); clubTxt.on('pointerdown', () => this.openClubView());
 
-    // Key hint
-    this.add.text(W / 2, H * 0.96, '[A] Deny  [D] Approve  [H] Hide', {
+    this.add.text(W / 2, H * 0.965, '[A] Отказ  [D] Впустить  [H] Спрятать', {
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: '6px', color: '#444444',
+      fontSize: '6px', color: '#665533',
     }).setOrigin(0.5).setDepth(30);
   }
 

@@ -3,7 +3,7 @@ import { GameState } from '../GameState.js';
 import { LOCALES } from '../data/locales.js';
 import { AudioSystem } from '../systems/AudioSystem.js';
 
-const DARK = 0x05000f;
+const DARK = 0x18103C;
 const GOLD = 0xffd700;
 
 // Zone ids for event display
@@ -53,19 +53,21 @@ export class ClubScene extends Phaser.Scene {
 
   buildCeiling(W, H) {
     const g = this.add.graphics();
-    g.fillStyle(0x02000a);
+    g.fillStyle(0x0E0828);
     g.fillRect(0, 0, W, H * 0.15);
 
     // Rig bars
-    g.fillStyle(0x221100);
+    g.fillStyle(0x2A1A00);
     g.fillRect(W * 0.05, 2, W * 0.90, 8);
+    g.lineStyle(1, 0x554420, 0.6);
+    g.strokeRect(W * 0.05, 2, W * 0.90, 8);
 
-    // Spotlight cones (static colored triangles)
+    // Spotlight cones (brighter)
     const spots = [
-      { x: W * 0.15, color: 0xff0066, alpha: 0.07 },
-      { x: W * 0.35, color: 0x0088ff, alpha: 0.07 },
-      { x: W * 0.65, color: 0x00ffaa, alpha: 0.07 },
-      { x: W * 0.85, color: 0xff8800, alpha: 0.07 },
+      { x: W * 0.15, color: 0xFF0088, alpha: 0.16 },
+      { x: W * 0.35, color: 0x0088FF, alpha: 0.16 },
+      { x: W * 0.65, color: 0x00FFCC, alpha: 0.16 },
+      { x: W * 0.85, color: 0xFF8800, alpha: 0.16 },
     ];
     spots.forEach(s => {
       g.fillStyle(s.color, s.alpha);
@@ -90,19 +92,19 @@ export class ClubScene extends Phaser.Scene {
     for (let c = 0; c < 10; c++) {
       for (let r = 0; r < 8; r++) {
         const even = (c + r) % 2 === 0;
-        g.fillStyle(even ? 0x1a0035 : 0x06000d);
+        g.fillStyle(even ? 0x2A1858 : 0x0E0828);
         g.fillRect(c * tW, floorY + r * tH, tW, tH);
       }
     }
 
     // Floor glow blobs
     const blobs = [
-      { x: W * 0.20, y: floorY + floorH * 0.5, c: 0xff0066, r: 35 },
-      { x: W * 0.50, y: floorY + floorH * 0.4, c: 0x0066ff, r: 45 },
-      { x: W * 0.80, y: floorY + floorH * 0.5, c: 0x00ffaa, r: 35 },
+      { x: W * 0.20, y: floorY + floorH * 0.5, c: 0xFF0088, r: 40 },
+      { x: W * 0.50, y: floorY + floorH * 0.4, c: 0x0088FF, r: 52 },
+      { x: W * 0.80, y: floorY + floorH * 0.5, c: 0x00FFCC, r: 40 },
     ];
     blobs.forEach(b => {
-      g.fillStyle(b.c, 0.08);
+      g.fillStyle(b.c, 0.16);
       g.fillCircle(b.x, b.y, b.r);
     });
 
@@ -119,13 +121,13 @@ export class ClubScene extends Phaser.Scene {
     const vy = H * 0.56;
     const vh = H * 0.12;
 
-    g.fillStyle(0x1a0040, 0.9);
+    g.fillStyle(0x221058, 0.9);
     g.fillRect(0, vy, W * 0.55, vh);
-    g.lineStyle(2, 0x8844ff);
+    g.lineStyle(2, 0xAA55FF);
     g.strokeRect(0, vy, W * 0.55, vh);
 
     // VIP rope
-    g.lineStyle(4, 0x880044);
+    g.lineStyle(4, 0xAA0055);
     g.beginPath();
     g.moveTo(0, vy);
     g.lineTo(W * 0.55, vy);
@@ -164,15 +166,15 @@ export class ClubScene extends Phaser.Scene {
     const bw = W * 0.42;
     const bh = H * 0.12;
 
-    g.fillStyle(0x2a0808, 0.9);
+    g.fillStyle(0x3A1010, 0.9);
     g.fillRect(bx, by, bw, bh);
-    g.lineStyle(2, 0xff4400);
+    g.lineStyle(2, 0xFF6633);
     g.strokeRect(bx, by, bw, bh);
 
     // Bar counter
-    g.fillStyle(0x4a1a00);
+    g.fillStyle(0x602000);
     g.fillRect(bx + 4, by + bh - 18, bw - 8, 14);
-    g.lineStyle(1, 0x884400);
+    g.lineStyle(1, 0xAA5500);
     g.strokeRect(bx + 4, by + bh - 18, bw - 8, 14);
 
     // Bottles
@@ -215,9 +217,9 @@ export class ClubScene extends Phaser.Scene {
     const dw = W * 0.28;
     const dh = H * 0.13;
 
-    g.fillStyle(0x0d001a);
+    g.fillStyle(0x160830);
     g.fillRect(dx, dy, dw, dh);
-    g.lineStyle(2, 0x440088);
+    g.lineStyle(2, 0x6600AA);
     g.strokeRect(dx, dy, dw, dh);
 
     // Door handle
@@ -297,7 +299,7 @@ export class ClubScene extends Phaser.Scene {
       const y = floorY + H * 0.04 + Math.random() * (floorH - H * 0.06);
       const col = dotColors[i % dotColors.length];
       const dot = this.add.graphics();
-      dot.fillStyle(col, 0.75);
+      dot.fillStyle(col, 0.92);
       dot.fillCircle(0, 0, 4 + Math.random() * 3);
       dot.setPosition(x, y);
 
@@ -355,8 +357,8 @@ export class ClubScene extends Phaser.Scene {
       const sg = this.add.graphics();
       const sx = W * 0.15 + i * W * 0.22;
       const sy = H * 0.50 + Math.random() * H * 0.05;
-      sg.fillStyle(spotCols[i], 0.12);
-      sg.fillCircle(sx, sy, 22);
+      sg.fillStyle(spotCols[i], 0.22);
+      sg.fillCircle(sx, sy, 24);
       this.floorSpots.push(sg);
       this.tweens.add({
         targets: sg, alpha: { from: 0.05, to: 0.20 },
@@ -368,7 +370,7 @@ export class ClubScene extends Phaser.Scene {
   // ─── HUD STRIP ──────────────────────────────────────────────────────────────
 
   buildHUD(W, H, L) {
-    this.add.rectangle(0, 0, W, 44, 0x000000, 0.88).setOrigin(0).setDepth(50);
+    this.add.rectangle(0, 0, W, 44, 0x0A0820, 0.92).setOrigin(0).setDepth(50);
 
     this.add.text(8, 6, `${L.night_label} ${GameState.nightNumber}`, {
       fontFamily: '"Press Start 2P", monospace',
