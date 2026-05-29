@@ -555,4 +555,244 @@ export const NIGHT_EVENTS = [
       return { ok: false, msg: 'Fought it. Press covered it. HEAT +30. FBI +15%.' };
     },
   },
+
+  {
+    id: 'local_talent',
+    unlockNight: 1,
+    chance: 0.13,
+    title_safe:  { ru: '🎸 МУЗЫКАНТ ИЩЕТ СЦЕНУ', en: '🎸 MUSICIAN AT THE DOOR' },
+    title_adult: { ru: '🎸 НЕИЗДАННЫЙ АРТИСТ',   en: '🎸 UNSIGNED ARTIST'      },
+    title_max:   { ru: '🎸 БУДУЩАЯ ЗВЕЗДА?',      en: '🎸 FUTURE STAR?'         },
+    body_safe: {
+      ru: 'Молодой музыкант просит разрешения сыграть несколько песен. Бесплатно. Может быть хорошо, может — нет.',
+      en: 'A young musician asks to play a few songs. For free. Could be great, could be a disaster.',
+    },
+    body_adult: {
+      ru: 'Неизданный артист с гитарой. Говорит, что его знает весь Гринвич-Виллидж. Фанаты могут прийти следом.',
+      en: 'Unsigned artist with a guitar. Claims everyone in Greenwich Village knows him. Fans might follow.',
+    },
+    body_max: {
+      ru: 'Парень с гитарой и харизмой. Говорит: «Дайте 20 минут — я заполню зал». Арни говорит «нет». Толпа на улице уже собирается.',
+      en: 'Guy with a guitar and presence. Says: "Give me 20 minutes — I\'ll fill the room." Arnie says no. Crowd outside is already forming.',
+    },
+    choices: [
+      { key: 'allow', label: { ru: 'ДАТЬ ПЛОЩАДКУ',  en: 'LET HIM PLAY' } },
+      { key: 'deny',  label: { ru: 'ОТКАЗАТЬ',        en: 'REFUSE'       } },
+    ],
+    resolve(choice, gs) {
+      if (choice === 'allow') {
+        if (Math.random() < 0.55) {
+          gs.reputation   = Math.min(100, gs.reputation + 12);
+          gs.nightEarnings += 400;
+          return { ok: true, msg: 'CROWD LOVED IT! REP +12, +$400' };
+        }
+        gs.reputation = Math.max(0, gs.reputation - 6);
+        return { ok: false, msg: 'Off-key disaster. REP -6.' };
+      }
+      return { ok: true, msg: null };
+    },
+  },
+
+  {
+    id: 'celebrity_birthday',
+    unlockNight: 2,
+    chance: 0.09,
+    title_safe:  { ru: '🎂 ДЕНЬ РОЖДЕНИЯ ЗВЕЗДЫ', en: '🎂 CELEBRITY BIRTHDAY'   },
+    title_adult: { ru: '🎂 ВИП-ПРАЗДНИК',          en: '🎂 VIP BIRTHDAY BASH'   },
+    title_max:   { ru: '🎂 BIRTHDAY PARTY В VIP',  en: '🎂 VIP BIRTHDAY PARTY'  },
+    body_safe: {
+      ru: 'Известная личность хочет отметить день рождения в вашем клубе. Нужен торт и бутылки шампанского.',
+      en: 'A well-known figure wants to celebrate their birthday at your club. Needs cake and champagne.',
+    },
+    body_adult: {
+      ru: 'Знаменитость хочет закрытый VIP-вечер для 20 человек. Стоимость организации — $500, доход — до $2000.',
+      en: 'Celebrity wants a private VIP evening for 20 guests. Setup costs $500, potential intake up to $2,000.',
+    },
+    body_max: {
+      ru: 'Звезда хочет «самое безумное» день рождения Нью-Йорка. Шампанское, кокаин на столике, никаких журналистов. Организация $500 — доход $2500.',
+      en: 'Star wants "the wildest" birthday in New York. Champagne, coke on the table, no journalists. Setup $500 — intake $2,500.',
+    },
+    choices: [
+      { key: 'host',    label: { ru: 'ОРГАНИЗОВАТЬ ($500)', en: 'HOST IT ($500)'  } },
+      { key: 'decline', label: { ru: 'ОТКАЗАТЬ',            en: 'DECLINE'        } },
+    ],
+    resolve(choice, gs) {
+      if (choice === 'host') {
+        if (gs.nightEarnings < 500 && gs.stash < 500) {
+          return { ok: false, msg: 'NOT ENOUGH CASH!' };
+        }
+        gs.nightEarnings = Math.max(0, gs.nightEarnings - 500);
+        const payout = 1200 + Math.round(Math.random() * 1000);
+        gs.nightEarnings += payout;
+        gs.reputation    = Math.min(100, gs.reputation + 18);
+        return { ok: true, msg: `BIRTHDAY BASH! +$${payout} REP +18` };
+      }
+      gs.reputation = Math.max(0, gs.reputation - 5);
+      return { ok: false, msg: 'They went to Paradise Club. REP -5.' };
+    },
+  },
+
+  {
+    id: 'power_outage',
+    unlockNight: 3,
+    chance: 0.10,
+    title_safe:  { ru: '💡 СВЕТ ОТКЛЮЧИЛСЯ',     en: '💡 LIGHTS OUT'          },
+    title_adult: { ru: '💡 АВАРИЙНОЕ ОТКЛЮЧЕНИЕ', en: '💡 POWER OUTAGE'        },
+    title_max:   { ru: '💡 ТЕМНОТА. ХАОС. ВЫБОР', en: '💡 DARK. CHAOS. CHOOSE' },
+    body_safe: {
+      ru: 'Электричество неожиданно отключилось. Толпа замерла. Как поступить?',
+      en: 'Power cut unexpectedly. The crowd froze. What do you do?',
+    },
+    body_adult: {
+      ru: 'Весь блок обесточен. Генератор сломан. Свечи — романтика или пожарная опасность?',
+      en: 'The whole block is down. Generator is broken. Candles — romantic or fire hazard?',
+    },
+    body_max: {
+      ru: 'Кромешная тьма. Кто-то завизжал. Кто-то смеётся. В темноте происходит то, о чём утром молчат.',
+      en: 'Pitch black. Someone screamed. Someone is laughing. In the dark, things happen that nobody talks about in the morning.',
+    },
+    choices: [
+      { key: 'candles',      label: { ru: 'ЗАЖЕЧЬ СВЕЧИ',       en: 'LIGHT CANDLES'    } },
+      { key: 'electrician',  label: { ru: 'ВЫЗВАТЬ ЭЛЕКТРИКА ($300)', en: 'CALL ELECTRICIAN ($300)' } },
+      { key: 'send_home',    label: { ru: 'ЗАКРЫТЬ НА НОЧЬ',    en: 'CLOSE FOR THE NIGHT' } },
+    ],
+    resolve(choice, gs) {
+      if (choice === 'candles') {
+        gs.reputation  = Math.min(100, gs.reputation + 10);
+        gs.nightEarnings += 200;
+        return { ok: true, msg: 'Romantic! BAR +$200. REP +10.' };
+      }
+      if (choice === 'electrician') {
+        if (gs.nightEarnings < 300) return { ok: false, msg: 'NOT ENOUGH CASH!' };
+        gs.nightEarnings -= 300;
+        return { ok: true, msg: '-$300. Lights back in 5 min.' };
+      }
+      gs.nightEarnings = Math.round(gs.nightEarnings * 0.4);
+      return { ok: false, msg: 'Night ended early. Lost 60% revenue.' };
+    },
+  },
+
+  {
+    id: 'paparazzi_tip',
+    unlockNight: 1,
+    chance: 0.12,
+    title_safe:  { ru: '📷 ПАПАРАЦЦИ У ВХОДА',    en: '📷 PAPARAZZI OUTSIDE'    },
+    title_adult: { ru: '📷 ФОТОГРАФ ЖДЁТ ЗВЁЗД',  en: '📷 PHOTOGRAPHER WAITING' },
+    title_max:   { ru: '📷 DAILY NEWS ЖДЁТ',       en: '📷 DAILY NEWS IS WAITING' },
+    body_safe: {
+      ru: 'Фотограф топчется у входа. Говорит, что снимает для модного журнала.',
+      en: 'A photographer is lurking outside. Says he\'s shooting for a fashion magazine.',
+    },
+    body_adult: {
+      ru: 'Папарацци из Daily News. Если сейчас зайдёт звезда — завтра первая полоса. Позволить?',
+      en: 'Paparazzi from the Daily News. If a star walks in now — it\'s the front page tomorrow. Allow him?',
+    },
+    body_max: {
+      ru: 'Известный папарацци. Его снимки продают по $5000. Он видел что-то в VIP. Хочет $500 за молчание.',
+      en: 'Famous paparazzi. His shots sell for $5,000. He saw something in the VIP. Wants $500 to stay quiet.',
+    },
+    choices: [
+      { key: 'allow',   label: { ru: 'ПУСТИТЬ',            en: 'LET HIM IN'      } },
+      { key: 'pay_off', label: { ru: 'ОТКУПИТЬСЯ ($500)',   en: 'PAY OFF ($500)'  } },
+      { key: 'block',   label: { ru: 'ВЫГНАТЬ',             en: 'BLOCK HIM'       } },
+    ],
+    resolve(choice, gs) {
+      if (choice === 'allow') {
+        if (Math.random() < 0.5) {
+          gs.reputation = Math.min(100, gs.reputation + 20);
+          gs.nightEarnings += 300;
+          return { ok: true, msg: 'FRONT PAGE TOMORROW! REP +20, +$300' };
+        }
+        gs.fbiSuspicion = Math.min(100, gs.fbiSuspicion + 12);
+        gs.policeHeat   = Math.min(100, gs.policeHeat + 8);
+        return { ok: false, msg: 'SCANDAL PHOTOS! FBI +12%, HEAT +8' };
+      }
+      if (choice === 'pay_off') {
+        if (gs.nightEarnings < 500) return { ok: false, msg: 'NOT ENOUGH CASH!' };
+        gs.nightEarnings -= 500;
+        return { ok: true, msg: '-$500. He walked away.' };
+      }
+      gs.reputation = Math.max(0, gs.reputation - 4);
+      return { ok: true, msg: 'Blocked. He left angry. REP -4.' };
+    },
+  },
+
+  {
+    id: 'city_official',
+    unlockNight: 4,
+    chance: 0.11,
+    title_safe:  { ru: '🏛 ЧИНОВНИК У ВХОДА',     en: '🏛 OFFICIAL AT THE DOOR'   },
+    title_adult: { ru: '🏛 ПОЛИТИК ДЛЯ СВОИХ',    en: '🏛 POLITICIAN WANTS IN'    },
+    title_max:   { ru: '🏛 МЭРИЯ ТОЖЕ ТУСУЕТСЯ',  en: '🏛 CITY HALL PARTIES TOO'  },
+    body_safe: {
+      ru: 'Чиновник в костюме намекает, что VIP-доступ снял бы часть вопросов к клубу.',
+      en: 'A city official in a suit hints that VIP access could make certain questions about the club disappear.',
+    },
+    body_adult: {
+      ru: 'Помощник мэра хочет попасть без очереди — и без документов. Взамен — «добрая воля» горадминистрации.',
+      en: "The mayor's aide wants in without a line — and without paperwork. In return — the city's goodwill.",
+    },
+    body_max: {
+      ru: 'Чиновник из Комиссии по зонированию. «Впустите меня и двух подруг — и я потеряю заявление на закрытие вашего клуба». Улыбается.',
+      en: 'Official from the Zoning Commission. "Let me and two friends in — and I\'ll lose the petition to shut you down." He smiles.',
+    },
+    choices: [
+      { key: 'vip',    label: { ru: 'ПУСТИТЬ VIP',        en: 'GRANT VIP ACCESS' } },
+      { key: 'normal', label: { ru: 'КАК ОБЫЧНОГО ГОСТЯ', en: 'TREAT NORMALLY'   } },
+      { key: 'refuse', label: { ru: 'ОТКАЗАТЬ',            en: 'REFUSE'           } },
+    ],
+    resolve(choice, gs) {
+      if (choice === 'vip') {
+        gs.fbiSuspicion = Math.max(0, gs.fbiSuspicion - 15);
+        gs.policeHeat   = Math.max(0, gs.policeHeat - 20);
+        gs.reputation   = Math.min(100, gs.reputation + 5);
+        return { ok: true, msg: 'He owes you now. FBI -15%, HEAT -20.' };
+      }
+      if (choice === 'normal') {
+        return { ok: true, msg: 'Paid full price. Grumbled but left.' };
+      }
+      gs.policeHeat = Math.min(100, gs.policeHeat + 18);
+      return { ok: false, msg: 'Refused. City not happy. HEAT +18.' };
+    },
+  },
+
+  {
+    id: 'fashion_disaster',
+    unlockNight: 5,
+    chance: 0.09,
+    title_safe:  { ru: '👗 ДРЕСС-КОД ПОД УГРОЗОЙ', en: '👗 DRESS CODE CRISIS'   },
+    title_adult: { ru: '👗 ЗВЕЗДА В ТРЕНИКИ?',       en: '👗 STAR IN SWEATPANTS?' },
+    title_max:   { ru: '👗 ЭТО НЕВОЗМОЖНО',          en: '👗 UNBELIEVABLE OUTFIT' },
+    body_safe: {
+      ru: 'Известный человек пришёл в явно неподходящей одежде. Его все узнают. Что делать?',
+      en: 'A recognizable person showed up in clearly inappropriate clothing. Everyone knows them. What do you do?',
+    },
+    body_adult: {
+      ru: 'Знаменитость пришла в джинсах и кедах. Охрана остановила. Толпа ждёт вашего решения.',
+      en: 'Celebrity arrived in jeans and sneakers. Security stopped them. The crowd is watching your call.',
+    },
+    body_max: {
+      ru: 'Это рок-звезда первого класса. В спортивных штанах. Пьяная. С двумя фотографами позади.',
+      en: 'First-class rock star. In sweatpants. Drunk. With two photographers right behind them.',
+    },
+    choices: [
+      { key: 'allow',  label: { ru: 'ВПУСТИТЬ КАК ЕСТЬ',      en: 'LET THEM IN'          } },
+      { key: 'vip',    label: { ru: 'VIP — ЧЕРЕЗ ЧЁРНЫЙ ВХД', en: 'VIP — BACK ENTRANCE'  } },
+      { key: 'refuse', label: { ru: 'ДРЕСС-КОД — ЕСТЬ ДРЕСС-КОД', en: 'RULES ARE RULES' } },
+    ],
+    resolve(choice, gs) {
+      if (choice === 'allow') {
+        gs.reputation = Math.max(0, gs.reputation - 8);
+        gs.nightEarnings += 250;
+        return { ok: false, msg: 'Word got out. REP -8. +$250 from their tab.' };
+      }
+      if (choice === 'vip') {
+        gs.reputation = Math.min(100, gs.reputation + 6);
+        gs.nightEarnings += 400;
+        return { ok: true, msg: 'Handled smoothly. REP +6. +$400' };
+      }
+      gs.reputation = Math.min(100, gs.reputation + 10);
+      return { ok: true, msg: 'Strict. Standards intact. REP +10.' };
+    },
+  },
 ];

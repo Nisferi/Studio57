@@ -1219,7 +1219,7 @@ export class NightScene extends Phaser.Scene {
       }
     }
 
-    if (!guest) guest = generateGuest(nightNum);
+    if (!guest) guest = generateGuest(nightNum, GameState.reputation);
 
     this.guestQueue.push(guest);
     if (!this.currentGuest && !this.deciding) this.showNextGuest();
@@ -1345,6 +1345,14 @@ export class NightScene extends Phaser.Scene {
       GameState.nightStats.celebsHosted.push(celeb.id);
       this.velvetBox += celeb.entryBonus;
       this.showEvent(L.ev_celeb_in, `+$${celeb.entryBonus}`, '#ffd700');
+
+      // Fanfare — gold flash + big VIP banner
+      this.cameras.main.flash(400, 255, 215, 0, true);
+      this.time.delayedCall(120, () => {
+        this.floatText(this.W / 2, this.H * 0.28,
+          `★  ${celeb.name.toUpperCase()}  ★\n${L.ev_celeb_in}`,
+          '#ffd700', 2800);
+      });
 
       if (!GameState.flags.firstCelebSeen) GameState.flags.firstCelebSeen = true;
 
