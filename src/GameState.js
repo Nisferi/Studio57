@@ -59,6 +59,9 @@ export const GameState = {
     traitor: null,         // 'arnie' | 'collins' | null
   },
 
+  // Last night recap — for the Office newspaper
+  lastNight: null,         // { nightNumber, approved, rejected, fights, celebsHosted, netEarned }
+
   // Event booking (one event per night, chosen in Office)
   bookedEvent: null,       // { id, cost, label } or null
 

@@ -63,6 +63,9 @@ export class OfficeScene extends Phaser.Scene {
     // Arnie dialogue panel
     this.buildArniePanel(W, H);
 
+    // Night recap newspaper
+    this.buildNewspaper(W, H);
+
     // Booked event display
     const ev = GameState.bookedEvent;
     const lang = GameState.lang;
@@ -496,6 +499,103 @@ export class OfficeScene extends Phaser.Scene {
     g.strokeRect(postX, postY, postW, postH);
     g.lineStyle(1, 0x6a30a0);
     g.strokeRect(postX + 2, postY + 2, postW - 4, postH - 4);
+  }
+
+  buildNewspaper(W, H) {
+    const ln = GameState.lastNight;
+    if (!ln) return;
+
+    const lang = GameState.lang;
+    const panW = Math.min(W * 0.88, 320);
+    const panX = W / 2;
+    const panY = H * 0.145;
+    const panH = 38;
+
+    // Newspaper strip background
+    const ng = this.add.graphics().setDepth(3);
+    ng.fillStyle(0xf5eed8, 1);
+    ng.fillRect(panX - panW / 2, panY - panH / 2, panW, panH);
+    ng.lineStyle(1, 0xc8b88a);
+    ng.strokeRect(panX - panW / 2, panY - panH / 2, panW, panH);
+    // Masthead line
+    ng.lineStyle(2, 0x1a0a00);
+    ng.strokeLineShape(new Phaser.Geom.Line(panX - panW / 2 + 4, panY - panH / 2 + 11, panX + panW / 2 - 4, panY - panH / 2 + 11));
+
+    this.add.text(panX - panW / 2 + 8, panY - panH / 2 + 3, lang === 'ru' ? 'NEW YORK NIGHT GAZETTE' : 'NEW YORK NIGHT GAZETTE', {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '5px', color: '#1a0a00',
+    }).setDepth(4);
+
+    // Generate headline
+    const headline = this.generateHeadline(ln, lang);
+    this.add.text(panX, panY + 6, headline, {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '6px', color: '#1a0a00',
+      wordWrap: { width: panW - 16 }, align: 'center',
+    }).setOrigin(0.5, 0).setDepth(4);
+  }
+
+  generateHeadline(ln, lang) {
+    const { nightNumber, approved, rejected, fights, celebsHosted, netEarned } = ln;
+    const isRu = lang === 'ru';
+
+    // Celeb headline takes priority
+    if (celebsHosted.length > 0) {
+      const celebNames = {
+        sly_steel:      isRu ? 'СЛИ СТИЛ' : 'SLY STEEL',
+        warholder:      isRu ? 'ЭНДИ УОРХОЛДЕР' : 'ANDY WARHOLDER',
+        mini_michael:   isRu ? 'МИНИ МАЙКЛ' : 'MINI MICHAEL',
+        lisa_monelli:   isRu ? 'ЛИЗА МОНЕЛЛИ' : 'LISA MONELLI',
+        trump_swagger:  isRu ? 'ТРАМП СВАГГЕР' : 'TRUMP SWAGGER',
+        bianca_jaguar:  isRu ? 'БЬЯНКА ЯГУАР' : 'BIANCA JAGUAR',
+      };
+      const name = celebNames[celebsHosted[0]] || celebsHosted[0].toUpperCase();
+      return isRu
+        ? `«${name} ПРОВЁЛ НОЧЬ В СТУДИИ 57»`
+        : `"${name} SPENDS NIGHT AT STUDIO 57"`;
+    }
+
+    // Fight headline
+    if (fights >= 2) {
+      return isRu
+        ? `БЕСПОРЯДКИ НА 57-Й УЛ. — ПОЛИЦИЯ У КЛУБА`
+        : `BRAWLS ON 57TH ST — POLICE CALLED`;
+    }
+
+    // Good earnings
+    if (netEarned >= 3000) {
+      return isRu
+        ? `«СТУДИЯ 57» БЬЁТ РЕКОРДЫ НОЧИ #${nightNumber}`
+        : `STUDIO 57 BREAKS RECORDS — NIGHT #${nightNumber}`;
+    }
+
+    // High approvals
+    if (approved >= 20) {
+      return isRu
+        ? `ТОЛПА НА ВХОДЕ: ${approved} ГОСТЕЙ В ОДНУ НОЧЬ`
+        : `PACKED HOUSE: ${approved} GUESTS IN ONE NIGHT`;
+    }
+
+    // High rejections = strict
+    if (rejected >= 15) {
+      return isRu
+        ? `СТРОГИЙ ФЕЙСКОНТРОЛЬ: ${rejected} ОТКАЗОВ ЗА ВЕЧЕР`
+        : `TIGHT DOOR: ${rejected} TURNED AWAY ON NIGHT #${nightNumber}`;
+    }
+
+    // Default
+    const defaults_en = [
+      `STUDIO 57 KEEPS MIDTOWN DANCING`,
+      `ANOTHER WILD NIGHT ON 57TH STREET`,
+      `NYC NIGHTLIFE: STUDIO 57 DELIVERS`,
+    ];
+    const defaults_ru = [
+      `«СТУДИЯ 57» ДЕРЖИТ МИДТАУН В ТОНУСЕ`,
+      `ЕЩЁ ОДНА ДИКАЯ НОЧЬ НА 57-Й`,
+      `ГЛАВНЫЙ КЛУБ НЬЮ-ЙОРКА НЕ ПОДВОДИТ`,
+    ];
+    const idx = nightNumber % 3;
+    return isRu ? defaults_ru[idx] : defaults_en[idx];
   }
 
   makeBtn(cx, cy, bw, bh, label, cn, ch, cb) {

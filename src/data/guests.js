@@ -1,9 +1,9 @@
 export const STYLE = { ULTRA: 0, CLEAN: 1, STYLISH: 2, NORMAL: 3, TRASHY: 4 };
 export const INTOX = { SOBER: 0, TIPSY: 1, WASTED: 2 };
 
-const NAMES_M = ['Tony','Frank','Bobby','Johnny','Sal','Richie','Eddie','Vinny','Marco','Carlo','Lou','Mike','Danny','Pete','Jerry','Rick','Steve','David','James','Nick','Ray','Al','Hank','Buddy'];
-const NAMES_F = ['Gloria','Diana','Donna','Cindy','Linda','Karen','Debbie','Sandy','Lisa','Maria','Rosa','Angie','Tina','Pam','Susan','Barbara','Carol','Nancy','Janet','Rita','Sherry','Lola','Vera','Gina'];
-const SURNAMES = ['Smith','Johnson','Russo','Deluca','Fernandez','Brown','Davis','Miller','Wilson','Moore','Taylor','Anderson','Thomas','Jackson','White','Harris','Martin','Thompson','Garcia','Martinez','Cohen','Klein','Murphy','O\'Brien'];
+const NAMES_M = ['Tony','Frank','Bobby','Johnny','Sal','Richie','Eddie','Vinny','Marco','Carlo','Lou','Mike','Danny','Pete','Jerry','Rick','Steve','David','James','Nick','Ray','Al','Hank','Buddy','Larry','Gary','Barry','Terry','Ronnie','Donnie','Joey','Freddy','Paulie','Mikey','Louie','Carmine','Enzo','Roberto','Jorge','Curtis','Andre','Jerome','Calvin','Leon','Clyde'];
+const NAMES_F = ['Gloria','Diana','Donna','Cindy','Linda','Karen','Debbie','Sandy','Lisa','Maria','Rosa','Angie','Tina','Pam','Susan','Barbara','Carol','Nancy','Janet','Rita','Sherry','Lola','Vera','Gina','Brenda','Cheryl','Patty','Sheila','Roxanne','Cleo','Vivian','Marlene','Yvette','Carmen','Rosario','Latoya','Keisha','Tamara','Denise','Tracey','Fiona'];
+const SURNAMES = ['Smith','Johnson','Russo','Deluca','Fernandez','Brown','Davis','Miller','Wilson','Moore','Taylor','Anderson','Thomas','Jackson','White','Harris','Martin','Thompson','Garcia','Martinez','Cohen','Klein','Murphy','O\'Brien','Romano','Vitale','Esposito','Rivera','Reyes','Washington','Jefferson','Robinson','Walker','Hall','Allen','Young','King','Scott','Green','Adams','Baker','Nelson','Carter','Mitchell','Perez'];
 
 // Skin tone palettes (hex numbers)
 export const SKIN_PALETTES = [
@@ -65,7 +65,7 @@ function generateUndercoverAgent() {
   };
 }
 
-export function generateGuest(nightNumber) {
+export function generateGuest(nightNumber, reputation = 50) {
   const undercoverChance = nightNumber >= 9 ? 0.09 + Math.min(0.06, (nightNumber - 9) * 0.012) : 0;
   if (Math.random() < undercoverChance) return generateUndercoverAgent();
 
@@ -96,15 +96,16 @@ export function generateGuest(nightNumber) {
   const hasFakeId = realAge < minAge && Math.random() < fakeIdProb;
   const shownAge = hasFakeId ? rndInt(21, 27) : realAge;
 
-  // Style
+  // Style — high reputation attracts better-dressed guests
+  const repBonus   = Math.max(0, (reputation - 50) / 100) * 0.18; // up to +18% glamour at rep=100
   const trashBoost = Math.min(0.22, Math.max(0, (nightNumber - 1) * 0.016));
   const styleRoll  = Math.random();
   let style;
-  if      (styleRoll < 0.04)                      style = STYLE.ULTRA;
-  else if (styleRoll < 0.22)                      style = STYLE.CLEAN;
-  else if (styleRoll < 0.52)                      style = STYLE.STYLISH;
-  else if (styleRoll < (0.78 - trashBoost))       style = STYLE.NORMAL;
-  else                                             style = STYLE.TRASHY;
+  if      (styleRoll < 0.04 + repBonus * 0.5)             style = STYLE.ULTRA;
+  else if (styleRoll < 0.22 + repBonus)                    style = STYLE.CLEAN;
+  else if (styleRoll < 0.52 + repBonus)                    style = STYLE.STYLISH;
+  else if (styleRoll < (0.78 - trashBoost + repBonus))     style = STYLE.NORMAL;
+  else                                                      style = STYLE.TRASHY;
 
   // Intoxication — wasted is rarer on night 1
   const wastedChance = nightNumber === 1 ? 0.05 : Math.min(0.28, 0.10 + nightNumber * 0.012);

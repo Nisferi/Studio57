@@ -35,6 +35,17 @@ export class EndNightScene extends Phaser.Scene {
     const bankrupt   = totalFunds <= 0 && net <= 0;
     const nightJustEnded = GameState.nightNumber;
 
+    // Save recap before incrementing night number
+    const nsSnap = GameState.nightStats || {};
+    GameState.lastNight = {
+      nightNumber: nightJustEnded,
+      approved:    nsSnap.approved || 0,
+      rejected:    nsSnap.rejected || 0,
+      fights:      nsSnap.fights || 0,
+      celebsHosted: [...(nsSnap.celebsHosted || [])],
+      netEarned:   net,
+    };
+
     if (!bankrupt) {
       GameState.nightNumber++;
       GameState.totalNights++;
