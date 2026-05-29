@@ -6,7 +6,7 @@ import { EconomySystem } from '../systems/EconomySystem.js';
 import { REP_NIGHT_END, REP_LIGHTS_BONUS } from '../data/tuning.js';
 import { PixelUI } from '../systems/PixelUI.js';
 
-const DARK = 0x0a0838;
+const DARK = 0x0e0840;
 const GOLD = 0xffd700;
 
 export class EndNightScene extends Phaser.Scene {
@@ -72,12 +72,14 @@ export class EndNightScene extends Phaser.Scene {
       depth: 5, glowLayers: [12, 6, 2], glowAlphas: [0.10, 0.22, 0.42],
     });
 
-    // Night badge pill
+    // Night badge pill — wider with glow (#42)
     const badgeG = this.add.graphics().setDepth(6);
-    badgeG.fillStyle(0x1a0044, 0.95);
-    badgeG.fillRoundedRect(W / 2 - 52, titleY + 16, 104, 18, 5);
-    badgeG.lineStyle(1, GOLD, 0.6);
-    badgeG.strokeRoundedRect(W / 2 - 52, titleY + 16, 104, 18, 5);
+    badgeG.fillStyle(0xffd700, 0.12);
+    badgeG.fillRoundedRect(W / 2 - 60, titleY + 14, 120, 22, 7);
+    badgeG.fillStyle(0x1a0044, 0.96);
+    badgeG.fillRoundedRect(W / 2 - 58, titleY + 15, 116, 20, 6);
+    badgeG.lineStyle(2, GOLD, 0.80);
+    badgeG.strokeRoundedRect(W / 2 - 58, titleY + 15, 116, 20, 6);
     this.add.text(W / 2, titleY + 25, `NIGHT  ${nightJustEnded}`, {
       fontFamily: '"Press Start 2P", monospace',
       fontSize: '7px', color: '#ffd700',
@@ -90,8 +92,8 @@ export class EndNightScene extends Phaser.Scene {
     const panelCY = H * 0.50;
 
     PixelUI.panel(this, panelCX, panelCY, panelW, panelH, {
-      bgColor: 0x160c48, bgAlpha: 0.95,
-      borderColor: 0xaa66ff, cornerSize: 7, depth: 4,
+      bgColor: 0x180e50, bgAlpha: 0.96,
+      borderColor: 0xcc88ff, cornerSize: 7, depth: 4,
     });
 
     // Panel header
@@ -149,10 +151,10 @@ export class EndNightScene extends Phaser.Scene {
     const ns     = GameState.nightStats || { approved: 0, rejected: 0, fights: 0, celebsHosted: [] };
     const statsY = panelCY + panelH / 2 + 22;
     const badges = [
-      { icon: '✓', val: ns.approved,                     color: '#44ff88', label: 'IN'    },
-      { icon: '✗', val: ns.rejected,                     color: '#ff4444', label: 'OUT'   },
-      { icon: '⚡', val: ns.fights,                       color: '#ffaa00', label: 'FIGHT' },
-      { icon: '★', val: (ns.celebsHosted || []).length,  color: '#ffd700', label: 'VIP'   },
+      { icon: '✓', val: ns.approved,                     color: '#44ff88', label: 'IN',    border: 0x22aa55 },
+      { icon: '✗', val: ns.rejected,                     color: '#ff4444', label: 'OUT',   border: 0xaa2222 },
+      { icon: '⚡', val: ns.fights,                       color: '#ffaa00', label: 'FIGHT', border: 0xaa6600 },
+      { icon: '★', val: (ns.celebsHosted || []).length,  color: '#ffd700', label: 'VIP',   border: 0xaa8800 },
     ];
     const badgeW = Math.floor(panelW / 4) - 6;
     badges.forEach((b, i) => {
@@ -160,7 +162,7 @@ export class EndNightScene extends Phaser.Scene {
       const badBg = this.add.graphics().setDepth(5);
       badBg.fillStyle(0x180a40, 0.92);
       badBg.fillRoundedRect(bx, statsY - 10, badgeW, 28, 4);
-      badBg.lineStyle(1, 0x5533aa, 0.8);
+      badBg.lineStyle(2, b.border, 0.90);
       badBg.strokeRoundedRect(bx, statsY - 10, badgeW, 28, 4);
       this.add.text(bx + badgeW / 2, statsY - 2, `${b.icon} ${b.val}`, {
         fontFamily: '"Press Start 2P", monospace',
@@ -214,15 +216,43 @@ export class EndNightScene extends Phaser.Scene {
   }
 
   drawStarfield(W, H) {
+    // More stars + cross sparkle on large ones (#39, #40)
     const g = this.add.graphics();
-    for (let i = 0; i < 55; i++) {
-      const sz = Math.random() > 0.8 ? 2 : 1;
-      g.fillStyle(0xffffff, Math.random() * 0.5 + 0.1);
-      g.fillRect(
-        Phaser.Math.Between(0, W),
-        Phaser.Math.Between(0, H * 0.38),
-        sz, sz,
-      );
+    for (let i = 0; i < 85; i++) {
+      const sx  = Phaser.Math.Between(0, W);
+      const sy  = Phaser.Math.Between(0, H * 0.42);
+      const big = Math.random() > 0.76;
+      const a   = Math.random() * 0.62 + 0.18;
+      const t   = Math.random();
+      const col = t > 0.72 ? 0xaaceff : t > 0.50 ? 0xfff6cc : 0xffffff;
+      g.fillStyle(col, a);
+      g.fillRect(sx, sy, big ? 2 : 1, big ? 2 : 1);
+      if (big && Math.random() > 0.55) {
+        g.fillStyle(col, a * 0.30);
+        g.fillRect(sx - 3, sy, 8, 1);
+        g.fillRect(sx, sy - 3, 2, 8);
+      }
     }
+
+    // Animated falling star (#41)
+    const launchStar = () => {
+      const sx = Phaser.Math.Between(W * 0.1, W * 0.8);
+      const sg = this.add.graphics().setDepth(2);
+      sg.lineStyle(1, 0xffffff, 0.85);
+      sg.strokeLineShape(new Phaser.Geom.Line(sx, 0, sx + 18, 10));
+      sg.lineStyle(1, 0xffd700, 0.30);
+      sg.strokeLineShape(new Phaser.Geom.Line(sx - 5, -3, sx + 18, 10));
+      this.tweens.add({
+        targets: sg, x: W * 0.35, y: H * 0.18, alpha: 0,
+        duration: 800, ease: 'Quad.Out',
+        onComplete: () => {
+          sg.destroy();
+          if (this.scene.isActive('EndNight')) {
+            this.time.delayedCall(Phaser.Math.Between(4000, 9000), launchStar);
+          }
+        },
+      });
+    };
+    this.time.delayedCall(Phaser.Math.Between(1500, 4000), launchStar);
   }
 }

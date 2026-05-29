@@ -100,6 +100,27 @@ export class OfficeScene extends Phaser.Scene {
       this.scene.start('Street');
     });
 
+    // Animated neon sign flicker in window (#46 continued)
+    this._neonFlicker = this.add.graphics().setDepth(2);
+    const winX2 = W * 0.08; const winY2 = H * 0.50;
+    const winW2 = W * 0.26;
+    const drawNeon = (on) => {
+      this._neonFlicker.clear();
+      if (on) {
+        this._neonFlicker.fillStyle(0xff00cc, 0.45);
+        this._neonFlicker.fillRect(winX2 + winW2 * 0.10, winY2 + H * 0.22 * 0.25, winW2 * 0.55, 2);
+      }
+    };
+    let neonOn = true;
+    const flickerNeon = () => {
+      neonOn = !neonOn;
+      drawNeon(neonOn);
+      const delay = neonOn ? Phaser.Math.Between(2000, 5000) : Phaser.Math.Between(80, 200);
+      this.time.delayedCall(delay, flickerNeon);
+    };
+    drawNeon(true);
+    this.time.delayedCall(3000, flickerNeon);
+
     // Back to menu
     this.add.text(W * 0.08, H * 0.03, '←', {
       fontFamily: '"Press Start 2P", monospace',
@@ -248,13 +269,12 @@ export class OfficeScene extends Phaser.Scene {
   drawOfficeBg(W, H) {
     const g = this.add.graphics();
 
-    // ── 1. WALLS ──────────────────────────────────────────────────────────────
-    // Base wall colour — dark reddish-brown (wood panelling)
-    g.fillStyle(0x0f0808);
+    // ── 1. WALLS — warmer, more visible wood tone (#45) ──────────────────────
+    g.fillStyle(0x18100c);
     g.fillRect(0, 0, W, H * 0.75);
 
-    // Vertical wood panel strips
-    const panelColors = [0x120a08, 0x0d0606, 0x110908, 0x0e0707, 0x130b09, 0x0c0505];
+    // Vertical wood panel strips — slightly warmer/more visible
+    const panelColors = [0x1c120e, 0x16100a, 0x1a110c, 0x18100b, 0x1e140f, 0x160e09];
     const panelWidths = [0.09, 0.11, 0.08, 0.10, 0.12, 0.09, 0.10, 0.08, 0.11, 0.09];
     let px = 0;
     for (let i = 0; i < panelWidths.length; i++) {
@@ -263,14 +283,16 @@ export class OfficeScene extends Phaser.Scene {
       px += W * panelWidths[i];
     }
 
-    // Chair rail — horizontal moulding at H*0.45
+    // Chair rail — horizontal moulding at H*0.45 with neon under-glow (#50)
     g.lineStyle(3, 0x3a1a08);
     g.strokeLineShape(new Phaser.Geom.Line(0, H * 0.45, W, H * 0.45));
-    // Thin highlight above and shadow below
     g.lineStyle(1, 0x5a2a10);
     g.strokeLineShape(new Phaser.Geom.Line(0, H * 0.445, W, H * 0.445));
     g.lineStyle(1, 0x1a0804);
     g.strokeLineShape(new Phaser.Geom.Line(0, H * 0.455, W, H * 0.455));
+    // Subtle amber neon strip under rail (warm lamp vibe)
+    g.fillStyle(0xff8800, 0.06);
+    g.fillRect(0, H * 0.455, W, H * 0.015);
 
     // Baseboard — dark strip at bottom of wall
     g.fillStyle(0x1a0a06);
@@ -313,6 +335,14 @@ export class OfficeScene extends Phaser.Scene {
       g.fillRect(lx, ly, sz[0], sz[1]);
     }
 
+    // Distant neon sign visible through window (#46)
+    g.fillStyle(0xff00cc, 0.55);
+    g.fillRect(winX + winW * 0.10, winY + winH * 0.25, winW * 0.55, 2);
+    g.fillStyle(0xff00cc, 0.20);
+    g.fillRect(winX + winW * 0.10, winY + winH * 0.23, winW * 0.55, 5);
+    g.fillStyle(0x00ccff, 0.40);
+    g.fillRect(winX + winW * 0.15, winY + winH * 0.42, winW * 0.35, 2);
+
     // Glass reflections — faint diagonal streaks
     g.lineStyle(1, 0xffffff, 0.04);
     g.strokeLineShape(new Phaser.Geom.Line(winX + winW * 0.15, winY + 2, winX + winW * 0.25, winY + winH * 0.4));
@@ -345,15 +375,17 @@ export class OfficeScene extends Phaser.Scene {
     g.lineStyle(1, 0x111111);
     g.strokeLineShape(new Phaser.Geom.Line(sfX + 3, sfY + sfH * 0.5, sfX + sfW - 3, sfY + sfH * 0.5));
 
-    // Dial / combination lock — circle
+    // Dial / combination lock — gold tinted to hint at stash (#48)
     const dialCX = sfX + sfW * 0.5;
     const dialCY = sfY + sfH * 0.4;
-    g.fillStyle(0x444444);
+    g.fillStyle(0x665520);
     g.fillCircle(dialCX, dialCY, 10);
-    g.lineStyle(1, 0x666666);
+    g.lineStyle(2, 0xffd700, 0.7);
     g.strokeCircle(dialCX, dialCY, 10);
+    g.lineStyle(1, 0x333333);
+    g.strokeCircle(dialCX, dialCY, 7);
     // Dial notch
-    g.lineStyle(1, 0x888888);
+    g.lineStyle(2, 0xffd700, 0.9);
     g.strokeLineShape(new Phaser.Geom.Line(dialCX, dialCY - 5, dialCX, dialCY - 9));
 
     // Handle
@@ -401,6 +433,12 @@ export class OfficeScene extends Phaser.Scene {
         );
       }
     }
+
+    // — Desk lamp warm glow blob (#47)
+    g.fillStyle(0xff9900, 0.08);
+    g.fillEllipse(W * 0.60, H * 0.710, W * 0.28, H * 0.06);
+    g.fillStyle(0xffcc44, 0.04);
+    g.fillEllipse(W * 0.60, H * 0.710, W * 0.18, H * 0.04);
 
     // — Ashtray —
     g.fillStyle(0x222222);
@@ -487,10 +525,10 @@ export class OfficeScene extends Phaser.Scene {
     g.fillStyle(0x1a0030);
     g.fillRect(postX, postY, postW, postH);
 
-    // Coloured band stripes (concert poster feel)
-    const bandColors = [0x8800aa, 0xdd0044, 0xff6600, 0xffcc00, 0x0044cc];
+    // Coloured band stripes — more vivid (#49)
+    const bandColors = [0xcc00ee, 0xff1155, 0xff7700, 0xffee00, 0x0088ff];
     for (let b = 0; b < bandColors.length; b++) {
-      g.fillStyle(bandColors[b], 0.6);
+      g.fillStyle(bandColors[b], 0.82);
       g.fillRect(postX + 4, postY + 4 + b * (postH * 0.16), postW - 8, postH * 0.12);
     }
 

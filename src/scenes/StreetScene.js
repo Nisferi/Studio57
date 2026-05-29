@@ -14,8 +14,8 @@ const DARK  = 0x0a0838;
 const GOLD  = 0xffd700;
 const PINK  = 0xff00cc;
 
-// Crowd silhouette palette — vivid retrowave hues
-const CROWD_COLORS = [0xa000d8, 0xc04010, 0x0070d0, 0x6060b8, 0x909030, 0x207080];
+// Crowd silhouette palette — vivid retrowave hues (improvement #35)
+const CROWD_COLORS = [0xcc00ff, 0xff4420, 0x0099ff, 0x8060d8, 0xddcc00, 0x00aacc, 0xff0088, 0x44ff88];
 
 export class StreetScene extends Phaser.Scene {
   constructor() { super({ key: 'Street' }); }
@@ -30,6 +30,32 @@ export class StreetScene extends Phaser.Scene {
     this.buildNeonSign(W, H);
     this.buildUI(W, H, L);
     this.buildArnieDialogue(W, H);
+
+    // Animated marquee bulbs on club entrance (#street marquee animation)
+    this._bulbFrame = 0;
+    this._bulbG = this.add.graphics().setDepth(5);
+    this.time.addEvent({
+      delay: 220, loop: true,
+      callback: () => {
+        this._bulbG.clear();
+        this._bulbFrame++;
+        const mX = W * 0.20; const mY = H * 0.355;
+        const mW = W * 0.60; const mH = H * 0.025;
+        const bulbColors = [0xff00d0, 0xffd700, 0x00e8ff, 0xff5500];
+        const count = 14;
+        for (let bi = 0; bi < count; bi++) {
+          const bx = mX + 8 + bi * (mW - 16) / (count - 1);
+          const on = (bi + this._bulbFrame) % 3 !== 0;
+          if (on) {
+            const col = bulbColors[bi % bulbColors.length];
+            this._bulbG.fillStyle(col, 0.22);
+            this._bulbG.fillCircle(bx, mY + mH / 2, 5);
+            this._bulbG.fillStyle(col, 1.0);
+            this._bulbG.fillCircle(bx, mY + mH / 2, 2);
+          }
+        }
+      },
+    });
 
     // Countdown to auto-open
     this.countdown = 20;
@@ -56,31 +82,45 @@ export class StreetScene extends Phaser.Scene {
     g.fillGradientStyle(0x150a52, 0x150a52, 0x2c1890, 0x2c1890, 1);
     g.fillRect(0, 0, W, H);
 
-    // Horizon glow — stronger three-layer pink/violet
-    g.fillStyle(0xcc00ff, 0.28);
-    g.fillRect(0, H * 0.18, W, H * 0.10);
-    g.fillStyle(0xff0088, 0.18);
-    g.fillRect(0, H * 0.22, W, H * 0.06);
-    g.fillStyle(0xff44cc, 0.12);
-    g.fillRect(0, H * 0.24, W, H * 0.04);
+    // Horizon glow — four-layer vivid (#32)
+    g.fillStyle(0xcc00ff, 0.36);
+    g.fillRect(0, H * 0.17, W, H * 0.11);
+    g.fillStyle(0xff0088, 0.26);
+    g.fillRect(0, H * 0.21, W, H * 0.07);
+    g.fillStyle(0xff44cc, 0.18);
+    g.fillRect(0, H * 0.24, W, H * 0.05);
+    g.fillStyle(0xff88dd, 0.08);
+    g.fillRect(0, H * 0.26, W, H * 0.03);
 
-    // Stars
-    for (let i = 0; i < 70; i++) {
-      const a = Math.random() * 0.55 + 0.1;
-      g.fillStyle(0xffffff, a);
-      g.fillRect(
-        Phaser.Math.Between(0, W),
-        Phaser.Math.Between(0, H * 0.22),
-        Math.random() > 0.8 ? 2 : 1, Math.random() > 0.8 ? 2 : 1
-      );
+    // Stars — more with sparkle patterns (#31)
+    for (let i = 0; i < 95; i++) {
+      const sx = Phaser.Math.Between(0, W);
+      const sy = Phaser.Math.Between(0, H * 0.24);
+      const big = Math.random() > 0.76;
+      const a   = Math.random() * 0.65 + 0.18;
+      const t   = Math.random();
+      const col = t > 0.70 ? 0xaaceff : t > 0.48 ? 0xfff6cc : 0xffffff;
+      g.fillStyle(col, a);
+      g.fillRect(sx, sy, big ? 2 : 1, big ? 2 : 1);
+      if (big && Math.random() > 0.50) {
+        g.fillStyle(col, a * 0.30);
+        g.fillRect(sx - 3, sy, 8, 1);
+        g.fillRect(sx, sy - 3, 2, 8);
+      }
     }
 
-    // Moon halo
-    g.fillStyle(0xfff0c0, 0.06);
-    g.fillCircle(W * 0.82, H * 0.06, 28);
-    // Moon
-    g.fillStyle(0xfff8e0, 0.9);
+    // Moon — three halo rings, more visible (#30)
+    g.fillStyle(0xffd080, 0.05);
+    g.fillCircle(W * 0.82, H * 0.06, 44);
+    g.fillStyle(0xffe8cc, 0.10);
+    g.fillCircle(W * 0.82, H * 0.06, 32);
+    g.fillStyle(0xfff0c0, 0.16);
+    g.fillCircle(W * 0.82, H * 0.06, 22);
+    // Moon face
+    g.fillStyle(0xfff8e0, 0.95);
     g.fillCircle(W * 0.82, H * 0.06, 14);
+    g.lineStyle(1, 0xffe090, 0.70);
+    g.strokeCircle(W * 0.82, H * 0.06, 14);
 
     // ── 2. BACKGROUND BUILDINGS ───────────────────────────────────────────────
     const buildings = [
@@ -214,9 +254,11 @@ export class StreetScene extends Phaser.Scene {
     g.strokeLineShape(new Phaser.Geom.Line(W * 0.38, H * 0.605, W * 0.62, H * 0.605));
     g.strokeLineShape(new Phaser.Geom.Line(W * 0.39, H * 0.610, W * 0.61, H * 0.610));
 
-    // Red carpet
+    // Red carpet with gold trim border (#22 street version)
     g.fillStyle(0x5a0010, 1);
-    g.fillRect(W * 0.45, H * 0.60, W * 0.10, H * 0.05);
+    g.fillRect(W * 0.44, H * 0.60, W * 0.12, H * 0.05);
+    g.lineStyle(1, 0xffd700, 0.70);
+    g.strokeRect(W * 0.44, H * 0.60, W * 0.12, H * 0.05);
 
     // ── 5. SIDEWALK ───────────────────────────────────────────────────────────
     // Base asphalt — purple-tinted
@@ -247,12 +289,17 @@ export class StreetScene extends Phaser.Scene {
       ));
     }
 
-    // Lamp post (left side)
+    // Lamp post (left side) with glow circle (#29)
     g.fillStyle(0x2a2a2a);
     g.fillRect(W * 0.08 - 1, H * 0.44, 3, H * 0.17);   // pole
     g.fillRect(W * 0.08 - 5, H * 0.44, 10, 3);          // arm bracket
+    // Lamp glow halo
+    g.fillStyle(0xffe880, 0.14);
+    g.fillCircle(W * 0.08, H * 0.424, 22);
+    g.fillStyle(0xffd060, 0.28);
+    g.fillCircle(W * 0.08, H * 0.424, 12);
     // Lamp head
-    g.fillStyle(0xffd060, 0.9);
+    g.fillStyle(0xfff0a0, 0.95);
     g.fillRect(W * 0.08 - 6, H * 0.42, 12, 5);
 
     // Litter / cigarette butts
@@ -271,6 +318,15 @@ export class StreetScene extends Phaser.Scene {
 
     // Limo parked right
     this.drawLimo(g, W * 0.68, H * 0.655);
+
+    // Yellow taxi parked left (#28)
+    this.drawTaxi(g, W * 0.02, H * 0.650);
+
+    // Neon sign on a background building (#34)
+    g.fillStyle(0xff00cc, 0.70);
+    g.fillRect(W * 0.11 + 3, H * (0.26 - 0.28) + 4, W * 0.06 - 6, 2);
+    g.fillStyle(0x00ccff, 0.55);
+    g.fillRect(W * 0.79 + 2, H * (0.26 - 0.45) + 4, W * 0.07 - 4, 2);
   }
 
   drawLimo(g, x, y) {
@@ -315,7 +371,9 @@ export class StreetScene extends Phaser.Scene {
     g.lineStyle(1, 0x3a3a3a);
     g.strokeRect(x + 92, y - 14, 14, 10);
 
-    // ── Headlights (front, 2) ──
+    // ── Headlights (front, 2) with glow (#37) ──
+    g.fillStyle(0xffd080, 0.15);
+    g.fillCircle(x + 103, y - 8, 10);
     g.fillStyle(0xffd080, 0.95);
     g.fillRect(x + 98, y - 12, 5, 3);
     g.fillRect(x + 98, y - 7,  5, 3);
@@ -341,6 +399,60 @@ export class StreetScene extends Phaser.Scene {
       // Chrome hub
       g.fillStyle(0xaaaaaa);
       g.fillCircle(wx, y + 7, 2);
+    });
+  }
+
+  drawTaxi(g, x, y) {
+    // Yellow NYC taxi cab (#28)
+    g.fillStyle(0x000000, 0.40);
+    g.fillRect(x - 1, y + 5, 72, 4);
+
+    // Lower body
+    g.fillStyle(0xffd000);
+    g.fillRect(x, y - 8, 65, 14);
+
+    // Upper cabin
+    g.fillStyle(0xffb800);
+    g.fillRect(x + 8, y - 17, 42, 10);
+
+    // Chrome outlines
+    g.lineStyle(1, 0xaa8800, 0.9);
+    g.strokeRect(x, y - 8, 65, 14);
+    g.strokeRect(x + 8, y - 17, 42, 10);
+
+    // Taxi sign on roof
+    g.fillStyle(0xffffff);
+    g.fillRect(x + 24, y - 21, 14, 5);
+    g.lineStyle(1, 0xaaaaaa);
+    g.strokeRect(x + 24, y - 21, 14, 5);
+
+    // Windows (3)
+    g.fillStyle(0x0a1a30);
+    g.fillRect(x + 10, y - 16, 12, 8);
+    g.fillRect(x + 25, y - 16, 12, 8);
+    g.fillRect(x + 40, y - 16, 8, 8);
+    g.lineStyle(1, 0x1e3050);
+    g.strokeRect(x + 10, y - 16, 12, 8);
+    g.strokeRect(x + 25, y - 16, 12, 8);
+
+    // Headlights (amber)
+    g.fillStyle(0xffe880, 0.95);
+    g.fillRect(x + 58, y - 6, 6, 3);
+    g.fillRect(x + 58, y - 1, 6, 3);
+
+    // Tail lights (red)
+    g.fillStyle(0xff2020, 0.9);
+    g.fillRect(x - 3, y - 7, 4, 4);
+    g.fillRect(x - 3, y - 1, 4, 4);
+
+    // Wheels (3)
+    [x + 11, x + 38, x + 58].forEach(wx => {
+      g.fillStyle(0x111111);
+      g.fillCircle(wx, y + 6, 6);
+      g.fillStyle(0x404040);
+      g.fillCircle(wx, y + 6, 3);
+      g.fillStyle(0xaaaaaa);
+      g.fillCircle(wx, y + 6, 1);
     });
   }
 

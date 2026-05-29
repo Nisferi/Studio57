@@ -166,8 +166,8 @@ export class NightScene extends Phaser.Scene {
       g.fillStyle(spotRigColors[i], 0.85);
       g.fillRect(rx - 4, 14, 8, 6);
       // Colored light cone
-      g.fillStyle(spotRigColors[i], 0.11);
-      g.fillTriangle(rx, 20, rx - 58, H * 0.53, rx + 58, H * 0.53);
+      g.fillStyle(spotRigColors[i], 0.22);
+      g.fillTriangle(rx, 20, rx - 68, H * 0.55, rx + 68, H * 0.55);
     });
 
     // Horizontal rig wire
@@ -177,7 +177,7 @@ export class NightScene extends Phaser.Scene {
     g.strokePath();
 
     // ── WALLS ──────────────────────────────────────────────────────────────────
-    g.fillStyle(0x120830);
+    g.fillStyle(0x1A0845);
     g.fillRect(0, H * 0.28, W, H * 0.34);
 
     // Side decorative wall panels
@@ -192,12 +192,14 @@ export class NightScene extends Phaser.Scene {
     g.fillStyle(0x180A38);
     g.fillRect(W * 0.32, H * 0.28, W * 0.36, H * 0.34);
 
-    // Stage podium
-    g.fillStyle(0x220858);
+    // Stage podium — improvement #15: more vivid gold border
+    g.fillStyle(0x280a6a);
     g.fillRect(W * 0.38, H * 0.42, W * 0.24, H * 0.08);
-    g.lineStyle(2, 0xAA44FF);
-    g.strokeRect(W * 0.38, H * 0.42, W * 0.24, H * 0.08);
     g.lineStyle(2, 0xCC66FF);
+    g.strokeRect(W * 0.38, H * 0.42, W * 0.24, H * 0.08);
+    g.lineStyle(1, 0xFFD700, 0.7);
+    g.strokeRect(W * 0.381, H * 0.421, W * 0.238, H * 0.078);
+    g.lineStyle(2, 0xEE88FF);
     g.beginPath();
     g.moveTo(W * 0.38, H * 0.50);
     g.lineTo(W * 0.62, H * 0.50);
@@ -227,11 +229,12 @@ export class NightScene extends Phaser.Scene {
     g.fillGradientStyle(0x000000, 0x000000, 0x280860, 0x280860, 0);
     g.fillRect(W * 0.72, H * 0.50, W * 0.28, H * 0.12);
 
-    // Background dancer silhouettes
-    const dancerX = [W * 0.10, W * 0.22, W * 0.50, W * 0.76, W * 0.88];
+    // Background dancer silhouettes — tinted with club lighting colours
+    const dancerX   = [W * 0.10, W * 0.22, W * 0.50, W * 0.76, W * 0.88];
+    const dancerCol = [0x1a0048, 0x001a48, 0x1a0028, 0x001a3a, 0x1a0048];
     dancerX.forEach((dx, i) => {
       const dy = H * 0.54;
-      g.fillStyle(0x060020, 0.82);
+      g.fillStyle(dancerCol[i], 0.92);
       g.fillCircle(dx, dy - 22, 6);
       g.fillRect(dx - 5, dy - 16, 10, 16);
       if (i % 2 === 0) {
@@ -241,6 +244,12 @@ export class NightScene extends Phaser.Scene {
         g.fillRect(dx - 12, dy - 14, 7, 4);
         g.fillRect(dx + 5,  dy - 22, 7, 4);
       }
+    });
+    // Vertical wall light columns (disco colour bars)
+    const wallBarColors = [0xFF0088, 0x0088FF, 0x00FFCC, 0xFF6600];
+    [W * 0.01, W * 0.31, W * 0.69, W * 0.99].forEach((wx, i) => {
+      g.fillStyle(wallBarColors[i], 0.10);
+      g.fillRect(wx - 12, H * 0.28, 24, H * 0.34);
     });
 
     // ── ENTRY ARCH ──────────────────────────────────────────────────────────────
@@ -255,30 +264,45 @@ export class NightScene extends Phaser.Scene {
     for (let col = 0; col < 12; col++) {
       for (let row = 0; row < 8; row++) {
         const even = (col + row) % 2 === 0;
-        g.fillStyle(even ? 0x2E1660 : 0x100820);
+        g.fillStyle(even ? 0x3D1A9A : 0x060214);
         g.fillRect(col * tileW, H * 0.62 + row * tileH, tileW, tileH);
       }
     }
 
-    // Light blobs on dance floor
+    // Light blobs on dance floor — vivid coloured pools
     const blobData = [
-      { x: W * 0.18, y: H * 0.67, r: 30, color: 0xFF00DD },
-      { x: W * 0.45, y: H * 0.70, r: 24, color: 0x0088FF },
-      { x: W * 0.72, y: H * 0.66, r: 32, color: 0xFFCC00 },
-      { x: W * 0.88, y: H * 0.71, r: 20, color: 0x00FFCC },
+      { x: W * 0.10, y: H * 0.67, r: 26, color: 0xFF00DD },
+      { x: W * 0.30, y: H * 0.70, r: 22, color: 0x00AAFF },
+      { x: W * 0.50, y: H * 0.68, r: 32, color: 0xFFCC00 },
+      { x: W * 0.70, y: H * 0.71, r: 28, color: 0x00FFCC },
+      { x: W * 0.88, y: H * 0.68, r: 24, color: 0xFF5500 },
     ];
     blobData.forEach(({ x, y, r, color }) => {
-      g.fillStyle(color, 0.24);
+      g.fillStyle(color, 0.16);
+      g.fillCircle(x, y, r * 1.9);
+      g.fillStyle(color, 0.42);
       g.fillCircle(x, y, r);
     });
 
-    // Dance floor front edge
-    g.fillStyle(0x550088);
+    // Floor fog/haze — subtle gradient at floor level
+    g.fillStyle(0x220060, 0.18);
+    g.fillRect(0, H * 0.71, W, H * 0.035);
+    g.fillStyle(0x110040, 0.10);
+    g.fillRect(0, H * 0.743, W, H * 0.008);
+
+    // Dance floor front edge — bright neon strip
+    g.fillStyle(0x8800DD);
     g.fillRect(0, H * 0.745, W, 5);
-    g.lineStyle(2, 0xEE66FF);
+    g.lineStyle(2, 0xFF88FF);
     g.beginPath();
     g.moveTo(0, H * 0.745);
     g.lineTo(W, H * 0.745);
+    g.strokePath();
+    // Inner glow line
+    g.lineStyle(1, 0xCC44FF, 0.55);
+    g.beginPath();
+    g.moveTo(0, H * 0.748);
+    g.lineTo(W, H * 0.748);
     g.strokePath();
 
     // ── DESK SURFACE (H*0.75 – H*1.0) ──────────────────────────────────────────
@@ -385,9 +409,9 @@ export class NightScene extends Phaser.Scene {
     ballG.fillStyle(0xdddddd, 0.5);
     ballG.fillCircle(-ballR * 0.3, -ballR * 0.3, ballR * 0.35);
 
-    // Mirror tile mosaic — grid of small rectangles clipped to circle shape
+    // Mirror tile mosaic — grid of small rectangles clipped to circle shape (improvement #7)
     const tileSize = 4;
-    const tileColors = [0xffffff, 0xcccccc, 0xffd700, 0xaaaaaa, 0xffffff, 0x88ccff, 0xffffff, 0xffccaa];
+    const tileColors = [0xffffff, 0xcccccc, 0xffd700, 0xff00cc, 0xaaccff, 0x00ffcc, 0xff8844, 0xaa88ff];
     for (let ty = -ballR + 2; ty < ballR - 2; ty += tileSize + 1) {
       for (let tx = -ballR + 2; tx < ballR - 2; tx += tileSize + 1) {
         if (tx * tx + ty * ty < (ballR - 2) * (ballR - 2)) {
@@ -413,18 +437,19 @@ export class NightScene extends Phaser.Scene {
       ease: 'Linear',
     });
 
-    // Light rays from the disco ball (static graphics behind the container)
+    // Light rays from the disco ball — coloured (improvement #10-11)
     const rayG = this.add.graphics();
-    const rayAngles = [-70, -30, 20, 60, 110, 150];
-    const rayLength = H * 0.55;
-    rayAngles.forEach(angleDeg => {
+    const rayAngles = [-70, -40, -10, 20, 55, 90, 120, 155];
+    const rayColors = [0xFF00DD, 0x00AAFF, 0xFFD700, 0x00FFCC, 0xFF5500, 0xAA44FF, 0xFF0088, 0x44CCFF];
+    const rayLength = H * 0.58;
+    rayAngles.forEach((angleDeg, ri) => {
       const rad = Phaser.Math.DegToRad(angleDeg);
       const ex = cx + Math.cos(rad) * rayLength;
       const ey = ballY + Math.sin(rad) * rayLength;
-      const spreadR = 18;
+      const spreadR = 22;
       const perpX = -Math.sin(rad) * spreadR;
       const perpY =  Math.cos(rad) * spreadR;
-      rayG.fillStyle(0xffffff, 0.04);
+      rayG.fillStyle(rayColors[ri % rayColors.length], 0.09);
       rayG.fillTriangle(
         cx + Math.cos(rad) * ballR,
         ballY + Math.sin(rad) * ballR,
@@ -488,17 +513,19 @@ export class NightScene extends Phaser.Scene {
   }
 
   drawNeonSign(x, y) {
-    const glows = ['#ff00a0','#ff40a8','#ff80c0'];
+    // Improvement #9 — larger sign, stronger glow layers
+    const glows = ['#ff00a0','#ff30ac','#ff60c0','#ff90d4'];
     glows.forEach((c, i) => {
       this.add.text(x, y, 'STUDIO 57', {
         fontFamily: '"Press Start 2P", monospace',
-        fontSize: '18px', color: c, stroke: c,
-        strokeThickness: (3 - i) * 5, alpha: 0.2 + i * 0.25,
+        fontSize: '22px', color: c, stroke: c,
+        strokeThickness: (4 - i) * 6, alpha: 0.12 + i * 0.22,
       }).setOrigin(0.5);
     });
     this.add.text(x, y, 'STUDIO 57', {
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: '18px', color: '#ffffff',
+      fontSize: '22px', color: '#ffffff',
+      stroke: '#ffffff', strokeThickness: 1,
     }).setOrigin(0.5);
   }
 
@@ -1106,21 +1133,33 @@ export class NightScene extends Phaser.Scene {
     const g = this.add.graphics().setDepth(20);
     const ry = H * 0.68;
 
-    // Posts
-    g.fillStyle(0xd4a030);
+    // Posts — gold with bright finial
+    g.fillStyle(0xe8b840);
     [[W * 0.1, ry], [W * 0.9, ry]].forEach(([px, py]) => {
       g.fillRect(px - 4, py - 42, 8, 50);
       g.fillCircle(px, py - 42, 7);
+      g.fillStyle(0xffee60);
+      g.fillCircle(px, py - 49, 4);
+      g.fillStyle(0xe8b840);
     });
 
-    // Velvet rope (bezier approximation)
-    g.lineStyle(7, 0x880044, 1);
+    // Velvet rope — deep crimson, thicker (improvement #13)
+    g.lineStyle(9, 0xcc0055, 1);
     g.beginPath();
-    g.moveTo(W * 0.1, ry - 20);
     for (let i = 0; i <= 20; i++) {
       const t = i / 20;
       const bx = Phaser.Math.Linear(W * 0.1, W * 0.9, t);
-      const by = (ry - 20) + Math.sin(t * Math.PI) * 14;
+      const by = (ry - 20) + Math.sin(t * Math.PI) * 16;
+      i === 0 ? g.moveTo(bx, by) : g.lineTo(bx, by);
+    }
+    g.strokePath();
+    // Highlight thread on top of rope
+    g.lineStyle(2, 0xff6699, 0.45);
+    g.beginPath();
+    for (let i = 0; i <= 20; i++) {
+      const t = i / 20;
+      const bx = Phaser.Math.Linear(W * 0.1, W * 0.9, t);
+      const by = (ry - 22) + Math.sin(t * Math.PI) * 16;
       i === 0 ? g.moveTo(bx, by) : g.lineTo(bx, by);
     }
     g.strokePath();

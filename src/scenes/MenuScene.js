@@ -31,16 +31,17 @@ export class MenuScene extends Phaser.Scene {
   drawSky(W, H) {
     const g = this.add.graphics();
 
-    // Retrowave night gradient — vivid purple-blue, visible and bright
+    // Retrowave night gradient — vivid purple-blue, richer and deeper (#16)
     const bands = [
-      [0,          0x14094e],
-      [H * 0.08,   0x201272],
-      [H * 0.16,   0x2e1a9a],
-      [H * 0.24,   0x3c22bc],
-      [H * 0.32,   0x4a2ad8],
+      [0,          0x0c0638],
+      [H * 0.05,   0x180e62],
+      [H * 0.11,   0x251688],
+      [H * 0.18,   0x341ea8],
+      [H * 0.25,   0x4228c8],
+      [H * 0.32,   0x5030e0],
     ];
     bands.forEach(([y, col], i) => {
-      const nextY = bands[i + 1] ? bands[i + 1][0] : H * 0.40;
+      const nextY = bands[i + 1] ? bands[i + 1][0] : H * 0.42;
       g.fillStyle(col);
       g.fillRect(0, y, W, nextY - y);
     });
@@ -53,32 +54,36 @@ export class MenuScene extends Phaser.Scene {
     g.fillStyle(0xff44cc, 0.10);
     g.fillRect(0, H * 0.36, W, H * 0.05);
 
-    // Stars — three colour types; large ones get a cross-sparkle
+    // Stars — three colour types; large ones get a cross-sparkle (#18)
     this.starGraphics = this.add.graphics().setDepth(1);
     this.stars = [];
-    for (let i = 0; i < 92; i++) {
+    for (let i = 0; i < 120; i++) {
       const sx  = Phaser.Math.Between(0, W);
-      const sy  = Phaser.Math.Between(0, H * 0.33);
-      const big = Math.random() > 0.77;
-      const a   = Math.random() * 0.72 + 0.18;
+      const sy  = Phaser.Math.Between(0, H * 0.36);
+      const big = Math.random() > 0.72;
+      const a   = Math.random() * 0.80 + 0.20;
       const t   = Math.random();
       const col = t > 0.72 ? 0xaaceff : t > 0.50 ? 0xfff6cc : 0xffffff;
       this.starGraphics.fillStyle(col, a);
       this.starGraphics.fillRect(sx, sy, big ? 2 : 1, big ? 2 : 1);
-      if (big && Math.random() > 0.54) {
-        this.starGraphics.fillStyle(col, a * 0.28);
-        this.starGraphics.fillRect(sx - 2, sy, 6, 1);
-        this.starGraphics.fillRect(sx, sy - 2, 2, 6);
+      if (big && Math.random() > 0.44) {
+        this.starGraphics.fillStyle(col, a * 0.35);
+        this.starGraphics.fillRect(sx - 3, sy, 8, 1);
+        this.starGraphics.fillRect(sx, sy - 3, 2, 8);
       }
       this.stars.push({ x: sx, y: sy, a, big, col });
     }
 
-    // Moon — warm halo, craters, rim glow
-    g.fillStyle(0xffddaa, 0.11);
-    g.fillCircle(W * 0.84, H * 0.055, 36);
+    // Moon — warm halo rings, craters, rim glow (improvement #17)
+    g.fillStyle(0xffd080, 0.05);
+    g.fillCircle(W * 0.84, H * 0.055, 56);
+    g.fillStyle(0xffddaa, 0.10);
+    g.fillCircle(W * 0.84, H * 0.055, 42);
+    g.fillStyle(0xffe8cc, 0.18);
+    g.fillCircle(W * 0.84, H * 0.055, 30);
     g.fillStyle(0xfff4e0, 0.94);
     g.fillCircle(W * 0.84, H * 0.055, 18);
-    g.lineStyle(1, 0xffe090, 0.55);
+    g.lineStyle(1, 0xffe090, 0.70);
     g.strokeCircle(W * 0.84, H * 0.055, 18);
     // Craters — 3 details
     g.fillStyle(0xddcc88, 0.38);
@@ -96,24 +101,27 @@ export class MenuScene extends Phaser.Scene {
     g.fillStyle(0x1a0048, 0.5);
     g.fillRect(0, H * 0.22, W, H * 0.14);
 
-    // Background buildings — visible deep purple, not near-black
+    // Background buildings — more vivid purples, richer neon tops (#21, #26)
     const bgBldgs = [
-      { x: 0.00, w: 0.07, h: 0.34, col: 0x1c0a62 },
-      { x: 0.07, w: 0.05, h: 0.22, col: 0x160848 },
-      { x: 0.11, w: 0.09, h: 0.40, col: 0x220e80 },
-      { x: 0.63, w: 0.10, h: 0.28, col: 0x1a0860 },
-      { x: 0.74, w: 0.07, h: 0.38, col: 0x200c78 },
-      { x: 0.82, w: 0.08, h: 0.26, col: 0x160848 },
-      { x: 0.91, w: 0.09, h: 0.33, col: 0x1c0a62 },
+      { x: 0.00, w: 0.07, h: 0.34, col: 0x200c72 },
+      { x: 0.07, w: 0.05, h: 0.22, col: 0x180a52 },
+      { x: 0.11, w: 0.09, h: 0.40, col: 0x2a1090 },
+      { x: 0.63, w: 0.10, h: 0.28, col: 0x1e0a70 },
+      { x: 0.74, w: 0.07, h: 0.38, col: 0x240e88 },
+      { x: 0.82, w: 0.08, h: 0.26, col: 0x180a52 },
+      { x: 0.91, w: 0.09, h: 0.33, col: 0x200c72 },
     ];
-    const winPalette = [0xffd050, 0x80d8ff, 0x88ff70, 0x0c0040];
+    const winPalette = [0xffd050, 0x80d8ff, 0x88ff70, 0xff8844, 0xcc44ff, 0x44ffcc];
     bgBldgs.forEach(b => {
       g.fillStyle(b.col);
       g.fillRect(W * b.x, H * (0.30 - b.h), W * b.w, H * b.h + 2);
-      // Neon accent strip on building tops (1 in 3 buildings)
-      if (Math.random() > 0.62) {
-        g.fillStyle(0xff00c8, 0.30);
+      // Neon accent strip on building tops — more buildings (improvement #21)
+      if (Math.random() > 0.38) {
+        const neonTopCols = [0xff00c8, 0x00ccff, 0xffcc00, 0xff4488];
+        g.fillStyle(neonTopCols[Math.floor(Math.random() * neonTopCols.length)], 0.42);
         g.fillRect(W * b.x, H * (0.30 - b.h), W * b.w, 2);
+        g.fillStyle(neonTopCols[0], 0.12);
+        g.fillRect(W * b.x, H * (0.30 - b.h), W * b.w, 5);
       }
       // Windows — warm/cool/green colour mix
       for (let wr = 0; wr < Math.ceil(b.h * 15); wr++) {
@@ -253,8 +261,8 @@ export class MenuScene extends Phaser.Scene {
     // Sidewalk — dark purple tint
     g.fillStyle(0x10101e);
     g.fillRect(0, H * 0.82, W, H * 0.18);
-    // Retrowave perspective grid — pink lines from vanishing point
-    g.lineStyle(1, 0xff00c8, 0.20);
+    // Retrowave perspective grid — brighter pink (#24)
+    g.lineStyle(1, 0xff00c8, 0.28);
     for (let gi = 0; gi <= 8; gi++) {
       const gy = H * 0.82 + (gi / 8) * H * 0.18;
       g.strokeLineShape(new Phaser.Geom.Line(0, gy, W, gy));
@@ -264,9 +272,11 @@ export class MenuScene extends Phaser.Scene {
       const gx = W * (gi / 14);
       g.strokeLineShape(new Phaser.Geom.Line(vp, H * 0.82, gx, H));
     }
-    // Curb glow
-    g.fillStyle(0xaa00ff, 0.20);
+    // Curb glow — stronger (#24)
+    g.fillStyle(0xcc00ff, 0.30);
     g.fillRect(0, H * 0.82, W, 3);
+    g.fillStyle(0x9900cc, 0.15);
+    g.fillRect(0, H * 0.823, W, 4);
   }
 
   // ─── SEARCHLIGHTS ────────────────────────────────────────────────────────────
@@ -304,9 +314,9 @@ export class MenuScene extends Phaser.Scene {
     const groundY = H * 0.82;
     const CROWD = [0xcc00e8, 0xd05010, 0x0080e0, 0x7060c8, 0xb0b030, 0x2870b0, 0xe00080, 0x00a888];
 
-    // Create crowd figure containers for bobbing
+    // Create crowd figure containers for bobbing (improvement #20 — more figures)
     this.crowdFigures = [];
-    const figCount = 14;
+    const figCount = 22;
     for (let i = 0; i < figCount; i++) {
       const fx = W * 0.04 + (W * 0.92 / figCount) * i + Phaser.Math.Between(-6, 6);
       const baseY = groundY - 2;
@@ -343,12 +353,14 @@ export class MenuScene extends Phaser.Scene {
       });
     }
 
-    // Ground glow (stronger neon haze from sign)
+    // Ground glow — stronger neon haze from sign (improvement #19)
     const glowG = this.add.graphics().setDepth(8);
-    glowG.fillStyle(0xdd00ff, 0.14);
-    glowG.fillEllipse(W / 2, groundY + 5, W * 0.85, 38);
-    glowG.fillStyle(0xff0088, 0.07);
-    glowG.fillEllipse(W / 2, groundY + 5, W * 0.60, 22);
+    glowG.fillStyle(0xdd00ff, 0.22);
+    glowG.fillEllipse(W / 2, groundY + 5, W * 0.90, 48);
+    glowG.fillStyle(0xff0088, 0.14);
+    glowG.fillEllipse(W / 2, groundY + 5, W * 0.65, 28);
+    glowG.fillStyle(0xffd700, 0.06);
+    glowG.fillEllipse(W / 2, groundY + 8, W * 0.35, 16);
   }
 
   // ─── SIGN BOARD ──────────────────────────────────────────────────────────────
@@ -507,9 +519,10 @@ export class MenuScene extends Phaser.Scene {
   // ─── FOOTER ──────────────────────────────────────────────────────────────────
 
   drawFooter(W, H, L) {
-    this.add.text(W / 2, H * 0.963, 'v0.2  ·  VELVET & STASH', {
+    // Footer with more visible text (#27)
+    this.add.text(W / 2, H * 0.963, 'v0.3  ·  VELVET & STASH', {
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: '6px', color: '#553366',
+      fontSize: '6px', color: '#7755aa',
     }).setOrigin(0.5).setDepth(6);
   }
 
@@ -561,17 +574,55 @@ export class MenuScene extends Phaser.Scene {
       loop: true,
       callback: () => {
         winG.clear();
-        // Pick random 3 windows and toggle brightness
         for (let i = 0; i < 3; i++) {
           const row = Phaser.Math.Between(0, 3);
           const col = Phaser.Math.Between(0, 5);
           const wx = W * 0.17 + W * 0.040 + col * W * 0.66 * 0.152;
           const wy = H * 0.07 + H * 0.038 + row * H * 0.064;
-          winG.fillStyle(Math.random() > 0.3 ? 0xffd060 : 0x040010, Math.random() * 0.6 + 0.4);
+          const winCols = [0xffd060, 0x80d8ff, 0x88ff70, 0xff8844];
+          winG.fillStyle(Math.random() > 0.3 ? winCols[Math.floor(Math.random() * winCols.length)] : 0x040010, Math.random() * 0.6 + 0.4);
           winG.fillRect(wx, wy, W * 0.048, H * 0.038);
         }
       },
     });
+
+    // Neon rain — subtle falling colored dots (#23)
+    const rainColors = [0xff00cc, 0x00aaff, 0xffd700, 0x00ffcc, 0xff5500];
+    const spawnRainDrop = () => {
+      const rx = Phaser.Math.Between(0, W);
+      const rg = this.add.graphics().setDepth(5).setAlpha(0);
+      const col = rainColors[Math.floor(Math.random() * rainColors.length)];
+      rg.fillStyle(col, 0.7);
+      rg.fillRect(0, 0, 1, Phaser.Math.Between(4, 9));
+      rg.x = rx; rg.y = H * 0.05;
+      this.tweens.add({
+        targets: rg, y: H * 0.40, alpha: { from: 0.55, to: 0 },
+        duration: Phaser.Math.Between(1400, 2800),
+        onComplete: () => rg.destroy(),
+      });
+    };
+    this.time.addEvent({
+      delay: 280, loop: true,
+      callback: () => { if (Math.random() > 0.55) spawnRainDrop(); },
+    });
+
+    // Shooting star (#19) — fires occasionally across the sky
+    const shootingStar = () => {
+      const sx = Phaser.Math.Between(0, W * 0.6);
+      const sy = Phaser.Math.Between(0, H * 0.20);
+      const sg = this.add.graphics().setDepth(2);
+      sg.lineStyle(1, 0xffffff, 0.9);
+      sg.strokeLineShape(new Phaser.Geom.Line(sx, sy, sx + 24, sy + 12));
+      sg.lineStyle(1, 0xffd700, 0.35);
+      sg.strokeLineShape(new Phaser.Geom.Line(sx - 6, sy - 3, sx + 24, sy + 12));
+      this.tweens.add({
+        targets: sg, x: W * 0.55, y: H * 0.15, alpha: 0,
+        duration: 700, ease: 'Quad.Out',
+        onComplete: () => sg.destroy(),
+      });
+      this.time.delayedCall(Phaser.Math.Between(6000, 14000), shootingStar);
+    };
+    this.time.delayedCall(Phaser.Math.Between(2000, 5000), shootingStar);
 
     // Camera fade-in
     this.cameras.main.fadeIn(500, 2, 0, 8);
