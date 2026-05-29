@@ -172,6 +172,36 @@ export const ARNIE_LINES = [
       en: "We're at the top, Victor. And the FBI watches every night. Sometimes I wonder — is it worth it.",
     },
   },
+  {
+    id: 'night_8',
+    condition: gs => gs.nightNumber === 8,
+    priority: 7,
+    portrait: 'nervous',
+    text: {
+      ru: 'Восемь ночей. Хьюз звонил сегодня. Они хотят знать, кто у нас бывает. Никаких журналистов.',
+      en: "Eight nights. Hughes called today. They want to know who comes here. No journalists.",
+    },
+  },
+  {
+    id: 'night_9_agents',
+    condition: gs => gs.nightNumber === 9,
+    priority: 8,
+    portrait: 'scared',
+    text: {
+      ru: 'Девятая. Говорят, ФБР шлёт своих людей. Без значков. Смотри: кто не пьёт и не танцует — агент.',
+      en: "Night nine. Word is the FBI is sending their own. No badges. Watch: if they don't drink and don't dance — they're feds.",
+    },
+  },
+  {
+    id: 'night_10',
+    condition: gs => gs.nightNumber === 10,
+    priority: 7,
+    portrait: 'tense',
+    text: {
+      ru: 'Десять ночей, Виктор. Ты знаменит. А знаменитость — это мишень. Будь осторожен с тайником.',
+      en: "Ten nights, Victor. You're famous. And famous means target. Watch the stash tonight.",
+    },
+  },
 
   // ── Collins arc ───────────────────────────────────────────────────────────
   {

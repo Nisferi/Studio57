@@ -746,7 +746,13 @@ export class NightScene extends Phaser.Scene {
       this.holoStrip.setVisible(true);
       this.holoTween.resume();
     } else {
-      this.guestDescTxt.setText('');
+      if (guest.isUndercover) {
+        this.guestDescTxt.setText("Hasn't looked at the bar menu.\nKeeps scanning the room.");
+        this.guestDescTxt.setColor('#444488');
+      } else {
+        this.guestDescTxt.setText('');
+        this.guestDescTxt.setColor('#666666');
+      }
       this.celebBadge.setVisible(false);
       this.holoStrip.setVisible(false);
       this.holoTween.pause();
@@ -781,6 +787,21 @@ export class NightScene extends Phaser.Scene {
       this.fakeIdHintG.fillStyle(0x886622, 0.35);
       this.fakeIdHintG.fillRect(tx + cw * 0.36, -ch / 2 + 37, 2, 1);
       this.fakeIdHintG.setVisible(true);
+    }
+
+    // Undercover agent hint — barely visible government ID hologram
+    if (guest.isUndercover) {
+      const hg = this.fakeIdHintG;
+      hg.clear();
+      // Faint blue overlay on the whole card
+      hg.fillStyle(0x0000cc, 0.04);
+      hg.fillRect(-this.cardW / 2 + 4, -this.cardH / 2 + 4, this.cardW - 8, this.cardH - 8);
+      // "FEDERAL" watermark — very low alpha diagonal text simulated as thin rects
+      hg.fillStyle(0x000088, 0.07);
+      for (let di = 0; di < 4; di++) {
+        hg.fillRect(-this.cardW / 2 + 20 + di * 18, -this.cardH / 2 + 30 + di * 22, 28, 2);
+      }
+      hg.setVisible(true);
     }
 
     this.drawPortrait(guest);
@@ -1227,6 +1248,16 @@ export class NightScene extends Phaser.Scene {
         GameState.nightStats.policeVisits++;
         this.showEvent(L.ev_police, `${L.ev_fine} -$${UNDERAGE_FINE}`, '#ff4040');
       }
+    }
+
+    // Undercover FBI agent
+    if (guest.isUndercover) {
+      const gain = 26 + Math.floor(Math.random() * 8);
+      GameState.fbiSuspicion = Math.min(100, GameState.fbiSuspicion + gain);
+      this.cameras.main.flash(350, 255, 0, 0);
+      this.floatText(this.W / 2, this.H * 0.33, `🔦 AGENT INSIDE!\nFBI +${gain}%`, '#ff2020', 3000);
+      if (!GameState.nightStats.undercoversLet) GameState.nightStats.undercoversLet = 0;
+      GameState.nightStats.undercoversLet++;
     }
 
     // Fight from wasted guest
