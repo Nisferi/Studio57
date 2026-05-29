@@ -16,7 +16,7 @@ import {
   FBI_RAID_THRESHOLD, FBI_RAID_TICK_CHANCE,
 } from '../data/tuning.js';
 
-const DARK    = 0x1C1430;
+const DARK    = 0x241848;
 const GOLD    = 0xffd700;
 const CREAM   = 0xf5e6c8;
 const GREEN   = 0x00CC44;
@@ -64,6 +64,23 @@ export class NightScene extends Phaser.Scene {
     this.input.keyboard.on('keydown-D', () => this.decide(false));
     this.input.keyboard.on('keydown-H', () => this.hideMoney());
 
+    // Swipe controls (mobile)
+    this._swipeStartX = null;
+    this._swipeStartY = null;
+    this.input.on('pointerdown', (p) => {
+      this._swipeStartX = p.x;
+      this._swipeStartY = p.y;
+    });
+    this.input.on('pointerup', (p) => {
+      if (this._swipeStartX === null) return;
+      const dx = p.x - this._swipeStartX;
+      const dy = p.y - this._swipeStartY;
+      if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+        this.decide(dx > 0); // right = approve, left = reject
+      }
+      this._swipeStartX = null;
+    });
+
     // Resume audio (user gesture just happened)
     AudioSystem.resume();
     AudioSystem.startDiscoLoop();
@@ -72,6 +89,9 @@ export class NightScene extends Phaser.Scene {
     this.clockEvent = this.time.addEvent({ delay: 1000, callback: this.onTick, callbackScope: this, loop: true });
     this.barEvent   = this.time.addEvent({ delay: BAR_TICK_MS, callback: this.onBarTick, callbackScope: this, loop: true });
     this.scheduleNextGuest();
+
+    // Night intro splash
+    this.showNightIntro(W, H);
 
     // Tutorial overlay for first night
     if (GameState.nightNumber === 1 && !GameState.flags.tutorialDone) {
@@ -88,6 +108,38 @@ export class NightScene extends Phaser.Scene {
     if (GameState.nightNumber === 4) {
       this.showNightRulesOverlay(W, H, L);
     }
+  }
+
+  showNightIntro(W, H) {
+    const overlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.85).setDepth(90);
+    const nightTxt = this.add.text(W / 2, H / 2 - 18, `NIGHT  ${GameState.nightNumber}`, {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '28px', color: '#ffd700',
+      stroke: '#000000', strokeThickness: 5,
+    }).setOrigin(0.5).setDepth(91).setAlpha(0);
+
+    const subTxt = this.add.text(W / 2, H / 2 + 24, 'NEW YORK · 1977', {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '9px', color: '#aa88ff',
+    }).setOrigin(0.5).setDepth(91).setAlpha(0);
+
+    this.tweens.add({
+      targets: [nightTxt, subTxt], alpha: 1,
+      duration: 300, ease: 'Quad.Out',
+      onComplete: () => {
+        this.time.delayedCall(900, () => {
+          this.tweens.add({
+            targets: [overlay, nightTxt, subTxt], alpha: 0,
+            duration: 400, ease: 'Quad.In',
+            onComplete: () => {
+              overlay.destroy();
+              nightTxt.destroy();
+              subTxt.destroy();
+            },
+          });
+        });
+      },
+    });
   }
 
   // ─── BACKGROUND ────────────────────────────────────────────────────────────
@@ -587,9 +639,13 @@ export class NightScene extends Phaser.Scene {
     const policePct = Math.min(1, GameState.policeHeat / 100);
     const repPct    = Math.min(1, GameState.reputation / 100);
 
-    this.tweens.add({ targets: this.fbiBar,    scaleX: fbiPct,    duration: 300, ease: 'Cubic.Out' });
-    this.tweens.add({ targets: this.policeBar,  scaleX: policePct, duration: 300, ease: 'Cubic.Out' });
-    this.tweens.add({ targets: this.repBar, width: 86 * repPct,    duration: 300, ease: 'Cubic.Out' });
+    // Kill previous bar tweens before adding new ones (prevents tween accumulation)
+    this.tweens.killTweensOf(this.fbiBar);
+    this.tweens.killTweensOf(this.policeBar);
+    this.tweens.killTweensOf(this.repBar);
+    this.tweens.add({ targets: this.fbiBar,   scaleX: fbiPct,       duration: 300, ease: 'Cubic.Out' });
+    this.tweens.add({ targets: this.policeBar, scaleX: policePct,    duration: 300, ease: 'Cubic.Out' });
+    this.tweens.add({ targets: this.repBar,    width: 86 * repPct,   duration: 300, ease: 'Cubic.Out' });
 
     const fbiCol = fbiPct > 0.7 ? 0xff0000 : fbiPct > 0.4 ? 0xff6600 : 0xff2020;
     this.fbiBar.setFillStyle(fbiCol);

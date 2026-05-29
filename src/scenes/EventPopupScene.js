@@ -157,10 +157,15 @@ export class EventPopupScene extends Phaser.Scene {
   }
 
   handleChoice(choiceKey) {
-    const result = this.eventData.resolve?.(choiceKey, GameState);
+    if (!this.eventData.resolve) {
+      this.scene.stop();
+      this.onClose(null);
+      return;
+    }
+    const result = this.eventData.resolve(choiceKey, GameState);
 
     if (result?.msg) {
-      const color = result.ok ? '#00aa44' : '#cc2222';
+      const color = result.ok !== false ? '#00aa44' : '#cc2222';
       this.resultTxt.setText(result.msg).setColor(color);
       this.time.delayedCall(900, () => {
         this.scene.stop();
@@ -168,7 +173,7 @@ export class EventPopupScene extends Phaser.Scene {
       });
     } else {
       this.scene.stop();
-      this.onClose(result);
+      this.onClose(result || null);
     }
   }
 }

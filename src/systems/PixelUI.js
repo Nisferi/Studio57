@@ -94,7 +94,7 @@ export const PixelUI = {
    * Pixel-art panel (background box with chrome corners).
    */
   panel(scene, cx, cy, w, h, {
-    bgColor    = 0x08041a,
+    bgColor    = 0x100c3a,
     bgAlpha    = 0.92,
     borderColor = 0xffd700,
     cornerSize  = 6,

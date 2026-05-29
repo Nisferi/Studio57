@@ -6,7 +6,7 @@ import { EconomySystem } from '../systems/EconomySystem.js';
 import { REP_NIGHT_END, REP_LIGHTS_BONUS } from '../data/tuning.js';
 import { PixelUI } from '../systems/PixelUI.js';
 
-const DARK = 0x020008;
+const DARK = 0x0a0838;
 const GOLD = 0xffd700;
 
 export class EndNightScene extends Phaser.Scene {
@@ -79,19 +79,19 @@ export class EndNightScene extends Phaser.Scene {
     const panelCY = H * 0.50;
 
     PixelUI.panel(this, panelCX, panelCY, panelW, panelH, {
-      bgColor: 0x080016, bgAlpha: 0.95,
-      borderColor: 0x8844ff, cornerSize: 7, depth: 4,
+      bgColor: 0x160c48, bgAlpha: 0.95,
+      borderColor: 0xaa66ff, cornerSize: 7, depth: 4,
     });
 
     // Panel header
     this.add.text(panelCX, panelCY - panelH / 2 + 14, '── FINANCIAL REPORT ──', {
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: '6px', color: '#442266',
+      fontSize: '6px', color: '#8855cc',
     }).setOrigin(0.5).setDepth(5);
 
     // Thin separator under header
     const sepG = this.add.graphics().setDepth(5);
-    sepG.lineStyle(1, 0x441188, 0.5);
+    sepG.lineStyle(1, 0x7722aa, 0.6);
     sepG.strokeLineShape(new Phaser.Geom.Line(
       panelCX - panelW / 2 + 10, panelCY - panelH / 2 + 24,
       panelCX + panelW / 2 - 10, panelCY - panelH / 2 + 24,
@@ -135,21 +135,21 @@ export class EndNightScene extends Phaser.Scene {
     });
 
     // ── Night stat badges ─────────────────────────────────────────────────
-    const ns     = GameState.nightStats;
+    const ns     = GameState.nightStats || { approved: 0, rejected: 0, fights: 0, celebsHosted: [] };
     const statsY = panelCY + panelH / 2 + 22;
     const badges = [
-      { icon: '✓', val: ns.approved,          color: '#44ff88', label: 'IN'    },
-      { icon: '✗', val: ns.rejected,          color: '#ff4444', label: 'OUT'   },
-      { icon: '⚡', val: ns.fights,            color: '#ffaa00', label: 'FIGHT' },
-      { icon: '★', val: ns.celebsHosted.length, color: '#ffd700', label: 'VIP' },
+      { icon: '✓', val: ns.approved,                     color: '#44ff88', label: 'IN'    },
+      { icon: '✗', val: ns.rejected,                     color: '#ff4444', label: 'OUT'   },
+      { icon: '⚡', val: ns.fights,                       color: '#ffaa00', label: 'FIGHT' },
+      { icon: '★', val: (ns.celebsHosted || []).length,  color: '#ffd700', label: 'VIP'   },
     ];
     const badgeW = Math.floor(panelW / 4) - 6;
     badges.forEach((b, i) => {
       const bx = panelCX - panelW / 2 + 14 + i * (panelW / 4);
       const badBg = this.add.graphics().setDepth(5);
-      badBg.fillStyle(0x0a0018, 0.92);
+      badBg.fillStyle(0x180a40, 0.92);
       badBg.fillRoundedRect(bx, statsY - 10, badgeW, 28, 4);
-      badBg.lineStyle(1, 0x332255, 0.8);
+      badBg.lineStyle(1, 0x5533aa, 0.8);
       badBg.strokeRoundedRect(bx, statsY - 10, badgeW, 28, 4);
       this.add.text(bx + badgeW / 2, statsY - 2, `${b.icon} ${b.val}`, {
         fontFamily: '"Press Start 2P", monospace',

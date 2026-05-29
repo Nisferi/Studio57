@@ -6,7 +6,7 @@ import { UPGRADES, getUpgradeNextLevel } from '../data/upgrades.js';
 import { getArnieLine } from '../data/arnie_lines.js';
 import { PixelUI } from '../systems/PixelUI.js';
 
-const DARK = 0x020008;
+const DARK = 0x0a0838;
 const GOLD = 0xffd700;
 
 const UPGRADE_KEYS = ['sound','bar','security','lights','vipLounge'];
@@ -25,7 +25,7 @@ export class OfficeScene extends Phaser.Scene {
 
   buildScene(W, H, L) {
     // Background — office interior
-    this.add.rectangle(0, 0, W, H, 0x0a0018).setOrigin(0);
+    this.add.rectangle(0, 0, W, H, 0x100838).setOrigin(0);
     this.drawOfficeBg(W, H);
 
     // Title
