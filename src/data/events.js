@@ -347,4 +347,212 @@ export const NIGHT_EVENTS = [
       return { ok: false, msg: 'FBI INTEREST +25%!' };
     },
   },
+
+  {
+    id: 'irs_audit_letter',
+    unlockNight: 7,
+    chance: 0.22,
+    title_safe:  { ru: '📋 ПИСЬМО ОТ IRS',         en: '📋 LETTER FROM THE IRS'       },
+    title_adult: { ru: '📋 НАЛОГОВАЯ ПРОВЕРКА',     en: '📋 TAX AUDIT NOTICE'           },
+    title_max:   { ru: '📋 IRS AUDIT — ТЕБЯ ЖДУТ', en: '📋 IRS AUDIT — THEY WANT YOU' },
+    body_safe: {
+      ru: 'Заказное письмо. Налоговая служба хочет объяснений по доходам за прошлый квартал.',
+      en: 'Certified mail. The IRS wants an explanation for last quarter\'s income figures.',
+    },
+    body_adult: {
+      ru: 'Арни бледный: «Они уже смотрят на наш кэш. Если тайник найдут — это уголовное».',
+      en: "Arnie is pale: \"They're already looking at our cash. If they find the stash — that's criminal.\"",
+    },
+    body_max: {
+      ru: 'Детальный запрос — суммы, даты, имена. Они либо знают, либо догадываются. Арни хочет нанять дорогого адвоката.',
+      en: 'Detailed request — amounts, dates, names. They either know or suspect. Arnie wants to hire an expensive lawyer.',
+    },
+    choices: [
+      { key: 'ignore',    label: { ru: 'ИГНОРИРОВАТЬ',        en: 'IGNORE IT'         } },
+      { key: 'accountant',label: { ru: 'НАНЯТЬ БУХГАЛТЕРА',   en: 'HIRE AN ACCOUNTANT'} },
+      { key: 'destroy',   label: { ru: 'УНИЧТОЖИТЬ ЗАПИСИ',   en: 'DESTROY THE RECORDS'} },
+    ],
+    resolve(choice, gs) {
+      if (choice === 'ignore') {
+        gs.fbiSuspicion = Math.min(100, gs.fbiSuspicion + 20);
+        return { ok: false, msg: 'Ignored. FBI suspicion +20%.' };
+      }
+      if (choice === 'accountant') {
+        const cost = 500;
+        gs.nightEarnings  = Math.max(0, gs.nightEarnings - cost);
+        gs.fbiSuspicion   = Math.max(0, gs.fbiSuspicion - 15);
+        return { ok: true, msg: `-$${cost} accountant. FBI -15%.` };
+      }
+      // destroy records
+      gs.fbiSuspicion = Math.min(100, gs.fbiSuspicion + 8);
+      return { ok: false, msg: 'Records gone. But they noticed. FBI +8%.' };
+    },
+  },
+
+  {
+    id: 'fire_inspector',
+    unlockNight: 8,
+    chance: 0.18,
+    title_safe:  { ru: '🚒 ПОЖАРНЫЙ ИНСПЕКТОР',   en: '🚒 FIRE INSPECTOR'      },
+    title_adult: { ru: '🚒 ИНСПЕКТОР ХОЧЕТ ЧТО-ТО', en: '🚒 INSPECTOR WANTS SOMETHING' },
+    title_max:   { ru: '🚒 ИНСПЕКТОР И КОНВЕРТ',  en: '🚒 INSPECTOR AND THE ENVELOPE' },
+    body_safe: {
+      ru: 'Пожарный инспектор прибыл с проверкой. Танцпол переполнен — нарушение норм.',
+      en: 'Fire inspector arrived for a check. Dance floor is over capacity — violation.',
+    },
+    body_adult: {
+      ru: 'Инспектор намекает: $300 в конверте — и все нарушения исчезнут до следующего квартала.',
+      en: 'The inspector hints: $300 in an envelope — and all violations disappear until next quarter.',
+    },
+    body_max: {
+      ru: 'Инспектор пьян, его рука уже тянется к кошельку. «Пятьсот или закрываем вас завтра, понятно?»',
+      en: 'The inspector is drunk, his hand already reaching for the envelope. "Five hundred or we shut you down tomorrow, understood?"',
+    },
+    choices: [
+      { key: 'bribe',   label: { ru: 'ДАТЬ ВЗЯТКУ ($300)',    en: 'BRIBE ($300)'         } },
+      { key: 'comply',  label: { ru: 'СОБЛЮДАТЬ НОРМЫ',       en: 'COMPLY WITH RULES'    } },
+      { key: 'ignore',  label: { ru: 'ВЫГНАТЬ ЕГО',           en: 'THROW HIM OUT'        } },
+    ],
+    resolve(choice, gs) {
+      if (choice === 'bribe') {
+        gs.nightEarnings  = Math.max(0, gs.nightEarnings - 300);
+        gs.fbiSuspicion   = Math.min(100, gs.fbiSuspicion + 5);
+        return { ok: true, msg: '-$300. He left happy. FBI +5%.' };
+      }
+      if (choice === 'comply') {
+        gs.nightEarnings = Math.max(0, gs.nightEarnings - 200);
+        gs.policeHeat    = Math.max(0, gs.policeHeat - 10);
+        return { ok: true, msg: 'Bar closed 10 min. -$200. HEAT -10.' };
+      }
+      gs.policeHeat    = Math.min(100, gs.policeHeat + 25);
+      gs.fbiSuspicion  = Math.min(100, gs.fbiSuspicion + 10);
+      return { ok: false, msg: 'He called backup. HEAT +25, FBI +10%.' };
+    },
+  },
+
+  {
+    id: 'bathroom_incident',
+    unlockNight: 9,
+    chance: 0.14,
+    title_safe:  { ru: '🚨 ЧП В ТУАЛЕТЕ',          en: '🚨 INCIDENT IN THE RESTROOM' },
+    title_adult: { ru: '🚨 ПЕРЕДОЗ В ТУАЛЕТЕ',      en: '🚨 OVERDOSE IN THE RESTROOM' },
+    title_max:   { ru: '🚨 ТЕЛО В ТРЕТЬЕЙ КАБИНКЕ', en: '🚨 BODY IN STALL THREE'      },
+    body_safe: {
+      ru: 'В туалете чрезвычайная ситуация. Охрана ждёт решения.',
+      en: 'Emergency in the restroom. Security is waiting for your call.',
+    },
+    body_adult: {
+      ru: 'Гость потерял сознание в кабинке. Возможно передоз. Скорая привлечёт полицию.',
+      en: 'Guest passed out in a stall. Possible overdose. An ambulance will bring the police.',
+    },
+    body_max: {
+      ru: 'Тело на полу, игла рядом. Охрана смотрит на тебя: «Мы вызываем скорую или нет?» У тебя 10 секунд.',
+      en: 'Body on the floor, needle nearby. Security stares at you: "Do we call an ambulance or not?" Ten seconds.',
+    },
+    choices: [
+      { key: 'ambulance', label: { ru: 'ВЫЗВАТЬ СКОРУЮ',      en: 'CALL AMBULANCE'    } },
+      { key: 'quiet',     label: { ru: 'ВЫНЕСТИ ТИХО',        en: 'HANDLE QUIETLY'    } },
+      { key: 'ignore',    label: { ru: 'ПРОДОЛЖАТЬ РАБОТУ',   en: 'KEEP THE MUSIC ON' } },
+    ],
+    resolve(choice, gs) {
+      if (choice === 'ambulance') {
+        gs.fbiSuspicion = Math.min(100, gs.fbiSuspicion + 18);
+        gs.policeHeat   = Math.min(100, gs.policeHeat + 12);
+        gs.reputation   = Math.min(100, gs.reputation + 5);
+        return { ok: true, msg: 'Ambulance called. FBI +18%. HEAT +12. REP +5.' };
+      }
+      if (choice === 'quiet') {
+        if (Math.random() < 0.45) {
+          gs.fbiSuspicion = Math.min(100, gs.fbiSuspicion + 35);
+          return { ok: false, msg: 'Witness saw. FBI +35%!' };
+        }
+        return { ok: true, msg: 'Handled quietly. Avoided press.' };
+      }
+      gs.reputation = Math.max(0, gs.reputation - 20);
+      gs.fbiSuspicion = Math.min(100, gs.fbiSuspicion + 8);
+      return { ok: false, msg: 'Word spread. REP -20. FBI +8%.' };
+    },
+  },
+
+  {
+    id: 'rival_club',
+    unlockNight: 8,
+    chance: 0.15,
+    title_safe:  { ru: '🗡 КОНКУРЕНТ ДЕЙСТВУЕТ',    en: '🗡 RIVAL IS MOVING'         },
+    title_adult: { ru: '🗡 КЛУБ «PARADISE» ПЛАТИТ', en: '🗡 PARADISE CLUB IS PAYING' },
+    title_max:   { ru: '🗡 САБОТАЖ ОТ «PARADISE»',  en: '🗡 SABOTAGE FROM PARADISE'  },
+    body_safe: {
+      ru: 'Конкурирующий клуб переманивает ваших постоянных гостей. Репутация под угрозой.',
+      en: 'A rival club is poaching your regulars. Your reputation is at risk.',
+    },
+    body_adult: {
+      ru: 'Paradise Club нанял людей, которые шепчут в толпе что ваш бар продаёт левый алкоголь.',
+      en: 'Paradise Club hired people whispering in your crowd that your bar sells bootleg liquor.',
+    },
+    body_max: {
+      ru: '«Paradise» подкупил двух ваших охранников. Они уже договорились с конкурентом.',
+      en: 'Paradise bribed two of your security guys. They\'ve already made a deal with the competition.',
+    },
+    choices: [
+      { key: 'counter',  label: { ru: 'ОТВЕТИТЬ ТЕМ ЖЕ',    en: 'COUNTER-CAMPAIGN'  } },
+      { key: 'pay',      label: { ru: 'ПЕРЕКУПИТЬ ОБРАТНО',  en: 'BUY THEM BACK'     } },
+      { key: 'ignore',   label: { ru: 'ИГНОРИРОВАТЬ',        en: 'IGNORE IT'         } },
+    ],
+    resolve(choice, gs) {
+      if (choice === 'counter') {
+        gs.nightEarnings = Math.max(0, gs.nightEarnings - 200);
+        gs.reputation    = Math.min(100, gs.reputation + 8);
+        return { ok: true, msg: '-$200 campaign. REP +8.' };
+      }
+      if (choice === 'pay') {
+        gs.nightEarnings = Math.max(0, gs.nightEarnings - 400);
+        gs.reputation    = Math.min(100, gs.reputation + 3);
+        return { ok: true, msg: '-$400 paid. Staff loyal again.' };
+      }
+      gs.reputation = Math.max(0, gs.reputation - 12);
+      return { ok: false, msg: 'Ignored. REP -12.' };
+    },
+  },
+
+  {
+    id: 'license_threat',
+    unlockNight: 12,
+    chance: 0.20,
+    title_safe:  { ru: '📜 УГРОЗА ЛИЦЕНЗИИ',       en: '📜 LICENSE THREAT'            },
+    title_adult: { ru: '📜 ЧИНОВНИК ХОЧЕТ БОЛЬШЕ', en: '📜 OFFICIAL WANTS MORE'       },
+    title_max:   { ru: '📜 ЛИЦЕНЗИЮ ХОТЯТ ОТОЗВАТЬ', en: '📜 THEY WANT TO PULL YOUR LICENSE' },
+    body_safe: {
+      ru: 'Городской инспектор грозит отозвать лицензию на работу клуба.',
+      en: 'A city inspector threatens to revoke the club\'s operating license.',
+    },
+    body_adult: {
+      ru: 'Чиновник из Комитета по лицензированию намекает: $1000 и всё уладится. Или $800 и адвокат.',
+      en: 'Official from the Licensing Board hints: $1,000 and it goes away. Or $800 and a lawyer.',
+    },
+    body_max: {
+      ru: 'Прямо говорит: «Дай тысячу, завтра бумаги исчезнут. Нет — клуб закрыт через 48 часов».',
+      en: 'Straight up: "Give me a thousand, the papers disappear tomorrow. No — the club is closed in 48 hours."',
+    },
+    choices: [
+      { key: 'bribe',  label: { ru: 'ЗАПЛАТИТЬ $1000',     en: 'PAY $1,000'          } },
+      { key: 'lawyer', label: { ru: 'НАНЯТЬ АДВОКАТА $800', en: 'HIRE LAWYER $800'    } },
+      { key: 'fight',  label: { ru: 'БОРОТЬСЯ ПУБЛИЧНО',   en: 'FIGHT IT PUBLICLY'   } },
+    ],
+    resolve(choice, gs) {
+      if (choice === 'bribe') {
+        gs.nightEarnings = Math.max(0, gs.nightEarnings - 1000);
+        gs.fbiSuspicion  = Math.min(100, gs.fbiSuspicion + 12);
+        return { ok: true, msg: '-$1000 paid. License safe. FBI +12%.' };
+      }
+      if (choice === 'lawyer') {
+        gs.nightEarnings = Math.max(0, gs.nightEarnings - 800);
+        gs.fbiSuspicion  = Math.max(0, gs.fbiSuspicion - 8);
+        return { ok: true, msg: '-$800 lawyer. Clean. FBI -8%.' };
+      }
+      gs.policeHeat   = Math.min(100, gs.policeHeat + 30);
+      gs.reputation   = Math.min(100, gs.reputation + 10);
+      gs.fbiSuspicion = Math.min(100, gs.fbiSuspicion + 15);
+      return { ok: false, msg: 'Fought it. Press covered it. HEAT +30. FBI +15%.' };
+    },
+  },
 ];

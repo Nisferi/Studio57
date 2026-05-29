@@ -32,13 +32,53 @@ export const HAIR_TYPES = ['afro','straight_long','feathered','pompadour','shag'
 function rnd(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 function rndInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
 
+const AGENT_FIRST_M = ['Douglas','Bradley','Warren','Kenneth','Craig','Derek','Gerald','Harold'];
+const AGENT_FIRST_F = ['Patricia','Diane','Barbara','Helen','Frances'];
+const AGENT_SURNAMES = ['Hughes','Barnes','Hayes','Morgan','Cole','Fletcher','Warren','Grant','Briggs','Norris'];
+
+function generateUndercoverAgent() {
+  const isMale    = Math.random() > 0.30;
+  const firstName = rnd(isMale ? AGENT_FIRST_M : AGENT_FIRST_F);
+  const lastName  = rnd(AGENT_SURNAMES);
+  const realAge   = rndInt(28, 46);
+  const skinIdx   = rndInt(0, 2);
+  const hairColor = rnd([0x1A0A00, 0x4A2A00, 0x888888, 0x222222]);
+  return {
+    id: `g_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+    name: `${firstName} ${lastName}`,
+    firstName,
+    gender: isMale ? 'M' : 'F',
+    realAge,
+    shownAge: realAge,
+    hasFakeId: false,
+    style: STYLE.CLEAN,
+    intox: INTOX.SOBER,
+    isCelebrity: false,
+    celebrity: null,
+    isUndercover: true,
+    ticketRevenue: 50,
+    barRevenue: 0,
+    skinIdx,
+    hairColor,
+    hairType: 'pompadour',
+    outfitColor: '#dce8f0',
+  };
+}
+
 export function generateGuest(nightNumber) {
+  const undercoverChance = nightNumber >= 9 ? 0.09 + Math.min(0.06, (nightNumber - 9) * 0.012) : 0;
+  if (Math.random() < undercoverChance) return generateUndercoverAgent();
+
   const isMale = Math.random() > 0.45;
   const firstName = rnd(isMale ? NAMES_M : NAMES_F);
   const lastName = rnd(SURNAMES);
 
   // Age — more borderline cases on later nights
-  const underage_chance = nightNumber <= 3 ? 0.06 : 0.13;
+  const underage_chance =
+    nightNumber <= 3  ? 0.06 :
+    nightNumber <= 6  ? 0.13 :
+    nightNumber <= 9  ? 0.18 :
+    nightNumber <= 12 ? 0.22 : 0.26;
   const ageRoll = Math.random();
   let realAge;
   if (ageRoll < underage_chance) {
@@ -48,21 +88,27 @@ export function generateGuest(nightNumber) {
   }
 
   const minAge = nightNumber >= 4 ? 21 : 18;
-  const hasFakeId = realAge < minAge && Math.random() < 0.65;
+  const fakeIdProb =
+    nightNumber <= 3  ? 0.58 :
+    nightNumber <= 6  ? 0.68 :
+    nightNumber <= 9  ? 0.78 :
+    nightNumber <= 12 ? 0.88 : 0.94;
+  const hasFakeId = realAge < minAge && Math.random() < fakeIdProb;
   const shownAge = hasFakeId ? rndInt(21, 27) : realAge;
 
   // Style
-  const styleRoll = Math.random();
+  const trashBoost = Math.min(0.22, Math.max(0, (nightNumber - 1) * 0.016));
+  const styleRoll  = Math.random();
   let style;
-  if      (styleRoll < 0.04) style = STYLE.ULTRA;
-  else if (styleRoll < 0.22) style = STYLE.CLEAN;
-  else if (styleRoll < 0.52) style = STYLE.STYLISH;
-  else if (styleRoll < 0.78) style = STYLE.NORMAL;
-  else                        style = STYLE.TRASHY;
+  if      (styleRoll < 0.04)                      style = STYLE.ULTRA;
+  else if (styleRoll < 0.22)                      style = STYLE.CLEAN;
+  else if (styleRoll < 0.52)                      style = STYLE.STYLISH;
+  else if (styleRoll < (0.78 - trashBoost))       style = STYLE.NORMAL;
+  else                                             style = STYLE.TRASHY;
 
   // Intoxication — wasted is rarer on night 1
-  const wastedChance = nightNumber === 1 ? 0.05 : 0.12;
-  const tippyChance  = nightNumber === 1 ? 0.15 : 0.25;
+  const wastedChance = nightNumber === 1 ? 0.05 : Math.min(0.28, 0.10 + nightNumber * 0.012);
+  const tippyChance  = nightNumber === 1 ? 0.15 : Math.min(0.32, 0.20 + nightNumber * 0.008);
   const intoxRoll = Math.random();
   let intox;
   if      (intoxRoll < 1 - wastedChance - tippyChance) intox = INTOX.SOBER;

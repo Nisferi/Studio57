@@ -11,6 +11,7 @@ import { EndNightScene }      from './scenes/EndNightScene.js';
 import { OfficeScene }        from './scenes/OfficeScene.js';
 import { BathroomScene }      from './scenes/BathroomScene.js';
 import { GameOverScene }      from './scenes/GameOverScene.js';
+import { EndingScene }          from './scenes/EndingScene.js';
 
 window.__studio57Lang = 'ru';
 
@@ -38,6 +39,7 @@ const config = {
     EndNightScene,
     OfficeScene,
     GameOverScene,
+    EndingScene,
   ],
   physics: { default: 'arcade', arcade: { debug: false } },
 };

@@ -190,7 +190,13 @@ export class EndNightScene extends Phaser.Scene {
         baseColor: 0x004422, hoverColor: 0x006633, borderColor: 0x44ff88,
         fontSize: '9px', depth: 20,
       });
-      bg.on('pointerdown', () => this.scene.start('Office'));
+      bg.on('pointerdown', () => {
+        if (nightJustEnded >= 15) {
+          this.scene.start('Ending');
+        } else {
+          this.scene.start('Office');
+        }
+      });
     }
 
     this.cameras.main.fadeIn(400, 2, 0, 8);
