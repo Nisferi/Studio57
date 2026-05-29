@@ -38,6 +38,8 @@ export class NightScene extends Phaser.Scene {
     this.eventPending     = false;
     this.tutorialStep     = 0;
     this.raidInProgress   = false;
+    this.pressNight       = false;
+    this.celebChanceBoost = 1;
   }
 
   create() {
@@ -74,6 +76,9 @@ export class NightScene extends Phaser.Scene {
 
     // Schedule recurring character appearances
     this.scheduleCollinsAppearance(L);
+
+    // Apply booked event effects
+    this.applyBookedEvent(L);
 
     // Night 4 rule change announcement
     if (GameState.nightNumber === 4) {
@@ -911,7 +916,7 @@ export class NightScene extends Phaser.Scene {
 
     let guest;
     const nightNum = GameState.nightNumber;
-    const celebChance = nightNum >= 2 ? 0.10 : 0;
+    const celebChance = (nightNum >= 2 ? 0.10 : 0) * this.celebChanceBoost;
 
     if (Math.random() < celebChance) {
       const eligible = CELEBRITIES.filter(c =>
@@ -1099,6 +1104,69 @@ export class NightScene extends Phaser.Scene {
 
     // Random macro event
     this.maybeFireEvent(L);
+  }
+
+  applyBookedEvent(L) {
+    const ev = GameState.bookedEvent;
+    if (!ev) return;
+
+    const fx = ev.effect;
+    const lang = GameState.lang;
+
+    switch (fx.type) {
+      case 'themed':
+        // Pre-fill guest queue with extra guests
+        for (let i = 0; i < (fx.extraGuests || 6); i++) {
+          this.guestQueue.push(generateGuest(GameState.nightNumber));
+        }
+        this.floatText(this.W / 2, this.H * 0.4,
+          lang === 'ru' ? '🎭 ТЕМАТИЧЕСКАЯ НОЧЬ\n+8 ГОСТЕЙ!' : '🎭 THEMED NIGHT\n+8 GUESTS!',
+          '#66aaff', 3000);
+        break;
+
+      case 'open_bar':
+        this.barBoost = Math.max(this.barBoost, fx.barBoost || 2);
+        this.floatText(this.W / 2, this.H * 0.4,
+          lang === 'ru' ? '🍻 ОТКРЫТЫЙ БАР\nДОХОД БАРА ×2!' : '🍻 OPEN BAR\nBAR INCOME ×2!',
+          '#ff8844', 3000);
+        break;
+
+      case 'press':
+        this.pressNight = true;   // checked in endNight
+        this.floatText(this.W / 2, this.H * 0.4,
+          lang === 'ru' ? '📸 ПРЕСС-НОЧЬ\nЖурналисты здесь!' : '📸 PRESS NIGHT\nJournalists here!',
+          '#44ff88', 3000);
+        break;
+
+      case 'vip_soiree':
+        this.celebChanceBoost = fx.celebBoost || 2;
+        GameState.stash = Math.min(99999, (GameState.stash || 0) + (fx.stashBonus || 300));
+        this.floatText(this.W / 2, this.H * 0.4,
+          lang === 'ru' ? '💎 VIP СОРЭ\nЗвёзды ждут...' : '💎 VIP SOIRÉE\nStars are waiting...',
+          '#cc88ff', 3000);
+        break;
+
+      case 'concert':
+        if (Math.random() < (fx.cancelChance || 0.2)) {
+          // Cancelled!
+          this.floatText(this.W / 2, this.H * 0.4,
+            lang === 'ru' ? '🎸 КОНЦЕРТ ОТМЕНЁН!\nАртист не приехал' : '🎸 CONCERT CANCELLED!\nArtist no-show',
+            '#ff4444', 3500);
+        } else {
+          this.velvetBox += fx.income || 2000;
+          GameState.reputation = Math.min(100, GameState.reputation + (fx.hype || 20));
+          this.updateHUD(L);
+          this.floatText(this.W / 2, this.H * 0.4,
+            lang === 'ru'
+              ? `🎸 КОНЦЕРТ!\n+$${fx.income} | Хайп +${fx.hype}`
+              : `🎸 CONCERT!\n+$${fx.income} | Hype +${fx.hype}`,
+            '#ffd700', 3500);
+        }
+        break;
+    }
+
+    // Clear booked event after applying
+    GameState.bookedEvent = null;
   }
 
   scheduleCollinsAppearance(L) {
@@ -1385,6 +1453,26 @@ export class NightScene extends Phaser.Scene {
     this.guestSpawnTimer?.remove();
     this.celebTimers.forEach(t => t?.remove());
     AudioSystem.stop();
+
+    // Press night bonus/penalty
+    if (this.pressNight) {
+      const ev = { repBonus: 15, repPenalty: 20 };
+      const hadScandal = GameState.nightStats.fights > 1 ||
+                         GameState.nightStats.underageSlipped > 0 ||
+                         GameState.fbiSuspicion > 50;
+      if (hadScandal) {
+        GameState.reputation = Math.max(0, GameState.reputation - ev.repPenalty);
+        this.floatText(this.W / 2, this.H * 0.45,
+          GameState.lang === 'ru' ? `📸 СКАНДАЛ! REP −${ev.repPenalty}` : `📸 SCANDAL! REP −${ev.repPenalty}`,
+          '#ff4444', 2000);
+      } else {
+        GameState.reputation = Math.min(100, GameState.reputation + ev.repBonus);
+        this.floatText(this.W / 2, this.H * 0.45,
+          GameState.lang === 'ru' ? `📸 ПРЕССА ДОВОЛЬНА! REP +${ev.repBonus}` : `📸 PRESS LOVED IT! REP +${ev.repBonus}`,
+          '#44ff88', 2000);
+      }
+    }
+
     this.saveNightResult(this.fines, 0);
     this.scene.start('EndNight');
   }

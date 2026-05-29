@@ -59,8 +59,27 @@ export class OfficeScene extends Phaser.Scene {
     // Arnie dialogue panel
     this.buildArniePanel(W, H);
 
+    // Booked event display
+    const ev = GameState.bookedEvent;
+    const lang = GameState.lang;
+    const evLabel = ev
+      ? (ev.label?.[lang] || ev.label?.en || ev.id)
+      : (lang === 'ru' ? 'Без эвента' : 'No event');
+    const evColor = ev ? '#ffd700' : '#444444';
+
+    this.add.text(W / 2, H * 0.81, lang === 'ru' ? `📅 ЭВЕНТ: ${evLabel}` : `📅 EVENT: ${evLabel}`, {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '7px', color: evColor,
+      backgroundColor: '#0a0018',
+      padding: { x: 8, y: 4 },
+    }).setOrigin(0.5);
+
+    // EVENTS button
+    this.makeBtn(W * 0.27, H * 0.87, 140, 34, lang === 'ru' ? '📅 ЭВЕНТ' : '📅 EVENTS',
+      0x1a0040, 0x2a0060, () => this.scene.start('Events'));
+
     // OPEN TONIGHT button
-    this.makeBtn(W / 2, H * 0.92, 200, 46, L.office_open, 0x006620, 0x009940, () => {
+    this.makeBtn(W * 0.73, H * 0.87, 140, 34, L.office_open, 0x006620, 0x009940, () => {
       GameState.resetNightStats();
       SaveSystem.save();
       this.scene.start('Street');

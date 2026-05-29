@@ -58,6 +58,9 @@ export const GameState = {
     traitor: null,         // 'arnie' | 'collins' | null
   },
 
+  // Event booking (one event per night, chosen in Office)
+  bookedEvent: null,       // { id, cost, label } or null
+
   // Concert system stub
   bookedConcert: null,     // { artistId, nightOffset, advancePaid } or null
   concertHistory: [],      // [{ artistId, income, success, night, epoch }]
@@ -99,7 +102,7 @@ export const GameState = {
         hughes: { evadedCount: 0, confrontedCount: 0 },
         loveStory: false, overdoseEvents: 0, traitor: null,
       },
-      bookedConcert: null, concertHistory: [],
+      bookedEvent: null, bookedConcert: null, concertHistory: [],
       flags: { tutorialDone: false, firstCelebSeen: false, firstRaidSeen: false,
                epilogue70Seen: false, epilogue80Seen: false, epilogue90Seen: false },
     });
