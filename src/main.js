@@ -4,6 +4,7 @@ import { VersionSelectScene } from './scenes/VersionSelectScene.js';
 import { MenuScene }          from './scenes/MenuScene.js';
 import { StreetScene }        from './scenes/StreetScene.js';
 import { NightScene }         from './scenes/NightScene.js';
+import { ClubScene }          from './scenes/ClubScene.js';
 import { EventPopupScene }    from './scenes/EventPopupScene.js';
 import { EndNightScene }      from './scenes/EndNightScene.js';
 import { OfficeScene }        from './scenes/OfficeScene.js';
@@ -28,6 +29,7 @@ const config = {
     MenuScene,
     StreetScene,
     NightScene,
+    ClubScene,
     EventPopupScene,
     EndNightScene,
     OfficeScene,

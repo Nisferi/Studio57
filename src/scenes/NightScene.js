@@ -793,11 +793,32 @@ export class NightScene extends Phaser.Scene {
     hideBg.on('pointerdown', () => this.hideMoney());
     hideTxt.setInteractive(); hideTxt.on('pointerdown', () => this.hideMoney());
 
+    // CLUB VIEW button
+    const clubBg = this.add.rectangle(W * 0.87, H * 0.07, 72, 28, 0x1a0050)
+      .setStrokeStyle(2, 0x8844ff).setInteractive().setDepth(55);
+    const clubTxt = this.add.text(W * 0.87, H * 0.07, '👁 CLUB', {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '7px', color: '#aa66ff',
+    }).setOrigin(0.5).setDepth(56);
+    clubBg.on('pointerover',  () => clubBg.setFillStyle(0x2a0080));
+    clubBg.on('pointerout',   () => clubBg.setFillStyle(0x1a0050));
+    clubBg.on('pointerdown',  () => this.openClubView());
+    clubTxt.setInteractive(); clubTxt.on('pointerdown', () => this.openClubView());
+
     // Key hint
     this.add.text(W / 2, H * 0.96, '[A] Deny  [D] Approve  [H] Hide', {
       fontFamily: '"Press Start 2P", monospace',
       fontSize: '6px', color: '#444444',
     }).setOrigin(0.5).setDepth(30);
+  }
+
+  openClubView() {
+    this.scene.pause('Night');
+    if (this.scene.isActive('Club')) {
+      this.scene.resume('Club');
+    } else {
+      this.scene.launch('Club');
+    }
   }
 
   buildVelvetRope(W, H) {
