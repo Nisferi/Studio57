@@ -135,13 +135,13 @@ export class EndNightScene extends Phaser.Scene {
     });
 
     // ── Night stat badges ─────────────────────────────────────────────────
-    const ns     = GameState.nightStats;
+    const ns     = GameState.nightStats || { approved: 0, rejected: 0, fights: 0, celebsHosted: [] };
     const statsY = panelCY + panelH / 2 + 22;
     const badges = [
-      { icon: '✓', val: ns.approved,          color: '#44ff88', label: 'IN'    },
-      { icon: '✗', val: ns.rejected,          color: '#ff4444', label: 'OUT'   },
-      { icon: '⚡', val: ns.fights,            color: '#ffaa00', label: 'FIGHT' },
-      { icon: '★', val: ns.celebsHosted.length, color: '#ffd700', label: 'VIP' },
+      { icon: '✓', val: ns.approved,                     color: '#44ff88', label: 'IN'    },
+      { icon: '✗', val: ns.rejected,                     color: '#ff4444', label: 'OUT'   },
+      { icon: '⚡', val: ns.fights,                       color: '#ffaa00', label: 'FIGHT' },
+      { icon: '★', val: (ns.celebsHosted || []).length,  color: '#ffd700', label: 'VIP'   },
     ];
     const badgeW = Math.floor(panelW / 4) - 6;
     badges.forEach((b, i) => {

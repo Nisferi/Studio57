@@ -349,7 +349,7 @@ export const NIGHT_EVENTS = [
   },
 
   {
-    id: 'irs_audit_letter',
+    id: 'irs_audit_escalation',
     unlockNight: 7,
     chance: 0.22,
     title_safe:  { ru: '📋 ПИСЬМО ОТ IRS',         en: '📋 LETTER FROM THE IRS'       },

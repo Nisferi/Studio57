@@ -4,8 +4,8 @@ import { SaveSystem } from '../SaveSystem.js';
 import { LOCALES } from '../data/locales.js';
 
 const GOLD   = 0xffd700;
-const PINK   = 0xff00a0;
-const DARK   = 0x020008;
+const PINK   = 0xff00cc;
+const DARK   = 0x0a0838;
 
 export class VersionSelectScene extends Phaser.Scene {
   constructor() { super({ key: 'VersionSelect' }); }
