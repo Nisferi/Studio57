@@ -51,6 +51,7 @@ export class NightScene extends Phaser.Scene {
     this.buildGuestCard(W, H, L);
     this.buildButtons(W, H, L);
     this.buildVelvetRope(W, H);
+    this.buildScanlines(W, H);
 
     // Keyboard shortcuts
     this.input.keyboard.on('keydown-A', () => this.decide(true));
@@ -357,6 +358,15 @@ export class NightScene extends Phaser.Scene {
     });
   }
 
+  buildScanlines(W, H) {
+    // CRT scanlines overlay — horizontal lines every 3px, very subtle
+    const g = this.add.graphics().setDepth(200).setAlpha(1);
+    g.fillStyle(0x000000, 0.045);
+    for (let y = 0; y < H; y += 3) {
+      g.fillRect(0, y, W, 1);
+    }
+  }
+
   drawNeonSign(x, y) {
     const glows = ['#ff00a0','#ff40a8','#ff80c0'];
     glows.forEach((c, i) => {
@@ -468,9 +478,19 @@ export class NightScene extends Phaser.Scene {
 
     this.cardContainer = this.add.container(cx, cy).setDepth(30).setVisible(false);
 
-    // Polaroid frame
-    const frame = this.add.rectangle(0, 0, cw, ch, CREAM).setStrokeStyle(2, 0xc8a060);
+    // Polaroid frame — warm alabaster (#FAF7F0 → 0xFAF7F0) per art direction
+    const frame = this.add.rectangle(0, 0, cw, ch, 0xFAF7F0).setStrokeStyle(2, 0xc8a060);
     this.cardContainer.add(frame);
+
+    // Chemical stains around edges (photo development marks)
+    const stains = this.add.graphics();
+    stains.fillStyle(0xd4a870, 0.07);
+    stains.fillEllipse(-cw * 0.38, -ch * 0.42, 40, 22);
+    stains.fillStyle(0xc89050, 0.06);
+    stains.fillEllipse( cw * 0.36,  ch * 0.38, 35, 18);
+    stains.fillStyle(0xe0b880, 0.05);
+    stains.fillEllipse(-cw * 0.30,  ch * 0.40, 28, 14);
+    this.cardContainer.add(stains);
 
     // Tape strips on corners
     const tape = this.add.graphics();
@@ -501,6 +521,20 @@ export class NightScene extends Phaser.Scene {
       fontSize: '8px', color: '#ffd700',
     }).setOrigin(0.5).setVisible(false);
     this.cardContainer.add(this.celebBadge);
+
+    // Holographic VIP strip — shimmering vertical foil on the right edge
+    this.holoStrip = this.add.graphics().setVisible(false);
+    const hx = cw / 2 - 10;
+    this.holoStrip.fillStyle(0xffd700, 0.4);
+    this.holoStrip.fillRect(hx, -ch / 2 + 4, 6, ch - 8);
+    this.cardContainer.add(this.holoStrip);
+    // Shimmer tween (loops while VIP card is shown)
+    this.holoTween = this.tweens.add({
+      targets: this.holoStrip,
+      alpha: { from: 0.3, to: 0.9 },
+      duration: 400, yoyo: true, repeat: -1,
+      paused: true,
+    });
 
     // Text panel (right side)
     const tx = phX + phW / 2 + 12;
@@ -567,9 +601,13 @@ export class NightScene extends Phaser.Scene {
       const desc = guest.celebrity.desc[GameState.lang] || guest.celebrity.desc.en;
       this.guestDescTxt.setText(desc);
       this.celebBadge.setVisible(true);
+      this.holoStrip.setVisible(true);
+      this.holoTween.resume();
     } else {
       this.guestDescTxt.setText('');
       this.celebBadge.setVisible(false);
+      this.holoStrip.setVisible(false);
+      this.holoTween.pause();
     }
 
     // Warnings
@@ -932,9 +970,23 @@ export class NightScene extends Phaser.Scene {
     }
 
     this.updateHUD(L);
-    this.time.delayedCall(820, () => {
-      this.currentGuest = null;
-      this.showNextGuest();
+
+    // Card slide-out animation: approve → up, reject → left
+    this.time.delayedCall(220, () => {
+      const targetX = approve ? this.cardCX          : -this.cardW;
+      const targetY = approve ? -this.cardH          : this.cardCY;
+      const rot     = approve ? -0.15                : 0.10;
+      this.tweens.add({
+        targets: this.cardContainer,
+        x: targetX, y: targetY, rotation: rot,
+        alpha: 0,
+        duration: 380, ease: 'Cubic.In',
+        onComplete: () => {
+          this.cardContainer.setVisible(false).setRotation(0).setPosition(this.cardCX, this.cardCY);
+          this.currentGuest = null;
+          this.showNextGuest();
+        },
+      });
     });
   }
 
@@ -1147,14 +1199,27 @@ export class NightScene extends Phaser.Scene {
   }
 
   showStamp(text, approve) {
+    // Art-direction colors: electric teal for admit, acid pink for reject
+    const color  = approve ? '#06B6D4' : '#F43F5E';
+    const stroke = approve ? '#003344' : '#440011';
     this.stampTxt.setText(text);
-    this.stampTxt.setColor(approve ? '#00cc44' : '#cc0022');
-    this.stampTxt.setStroke(approve ? '#003311' : '#330000', 3);
-    this.stampTxt.setAlpha(0).setScale(2.2);
+    this.stampTxt.setColor(color).setStroke(stroke, 3);
+
+    // Drop from above: start high and above scale, slam down
+    this.stampTxt.setAlpha(0).setScale(1.8).setY(-this.cardH * 0.2);
     this.tweens.add({
       targets: this.stampTxt,
-      alpha: 1, scaleX: 1, scaleY: 1,
-      duration: 180, ease: 'Back.Out',
+      alpha: 1, scaleX: 1, scaleY: 1, y: 0,
+      duration: 140, ease: 'Cubic.Out',
+      onComplete: () => {
+        // Impact: squash + camera shake
+        this.cameras.main.shake(70, 0.007);
+        this.tweens.add({
+          targets: this.stampTxt,
+          scaleX: 1.15, scaleY: 0.88,
+          duration: 60, ease: 'Quad.Out', yoyo: true,
+        });
+      },
     });
   }
 
@@ -1216,65 +1281,77 @@ export class NightScene extends Phaser.Scene {
     if (!GameState.flags.firstRaidSeen) GameState.flags.firstRaidSeen = true;
 
     AudioSystem.playAlarm();
-    this.eventPending = true;
-    GameState.nightEarnings = this.velvetBox;
 
-    const raidEvent = {
-      id: 'fbi_raid_live',
-      title_safe: { ru: '🔦 АГЕНТЫ У ДВЕРИ', en: '🔦 AGENTS AT THE DOOR' },
-      body_safe: {
-        ru: 'Двое в костюмах. Федеральные значки.\nВремя решать быстро.',
-        en: 'Two men in suits. Federal badges.\nDecide fast.',
-      },
-      choices: [
-        { key: 'open',  label: { ru: 'ОТКРЫТЬ ДВЕРЬ',  en: 'OPEN THE DOOR'  } },
-        { key: 'stall', label: { ru: 'ТЯНУТЬ ВРЕМЯ',   en: 'STALL FOR TIME' } },
-      ],
-      resolve(choice, gs) {
-        if (choice === 'open') {
+    // Red-blue police flash VFX before popup
+    const flashColors = [0xff0000, 0x0044ff, 0xff0000, 0x0044ff, 0xff0000];
+    flashColors.forEach((col, i) => {
+      this.time.delayedCall(i * 140, () => {
+        this.cameras.main.flash(120, (col >> 16) & 0xff, (col >> 8) & 0xff, col & 0xff);
+        if (i % 2 === 0) this.cameras.main.shake(60, 0.012);
+      });
+    });
+
+    this.time.delayedCall(750, () => {
+      this.eventPending = true;
+      GameState.nightEarnings = this.velvetBox;
+
+      const raidEvent = {
+        id: 'fbi_raid_live',
+        title_safe: { ru: '🔦 АГЕНТЫ У ДВЕРИ', en: '🔦 AGENTS AT THE DOOR' },
+        body_safe: {
+          ru: 'Двое в костюмах. Федеральные значки.\nВремя решать быстро.',
+          en: 'Two men in suits. Federal badges.\nDecide fast.',
+        },
+        choices: [
+          { key: 'open',  label: { ru: 'ОТКРЫТЬ ДВЕРЬ',  en: 'OPEN THE DOOR'  } },
+          { key: 'stall', label: { ru: 'ТЯНУТЬ ВРЕМЯ',   en: 'STALL FOR TIME' } },
+        ],
+        resolve(choice, gs) {
+          if (choice === 'open') {
+            const seized = gs.stash;
+            gs.stash = 0;
+            gs.fbiSuspicion = Math.max(0, gs.fbiSuspicion - 30);
+            return {
+              msg: seized > 0 ? `SEIZED: -$${seized}. SUSPICION ↓` : 'NOTHING FOUND. SUSPICION ↓',
+              ok: false, seized,
+            };
+          }
+          // Stall — 45 % they leave early
+          if (Math.random() < 0.45) {
+            gs.fbiSuspicion = Math.max(0, gs.fbiSuspicion - 8);
+            return { msg: 'THEY LEFT... FOR NOW.', ok: true, seized: 0 };
+          }
+          // Stall failed — forced entry
           const seized = gs.stash;
           gs.stash = 0;
-          gs.fbiSuspicion = Math.max(0, gs.fbiSuspicion - 30);
-          return {
-            msg: seized > 0 ? `SEIZED: -$${seized}. SUSPICION ↓` : 'NOTHING FOUND. SUSPICION ↓',
-            ok: false, seized,
-          };
-        }
-        // Stall — 45 % they leave early
-        if (Math.random() < 0.45) {
-          gs.fbiSuspicion = Math.max(0, gs.fbiSuspicion - 8);
-          return { msg: 'THEY LEFT... FOR NOW.', ok: true, seized: 0 };
-        }
-        // Stall failed — forced entry
-        const seized = gs.stash;
-        gs.stash = 0;
-        gs.fbiSuspicion = Math.min(100, gs.fbiSuspicion + 20);
-        return { msg: `FORCED ENTRY! SEIZED: -$${seized}`, ok: false, seized };
-      },
-    };
+          gs.fbiSuspicion = Math.min(100, gs.fbiSuspicion + 20);
+          return { msg: `FORCED ENTRY! SEIZED: -$${seized}`, ok: false, seized };
+        },
+      };
 
-    this.scene.launch('EventPopup', {
-      event: raidEvent,
-      onClose: (result) => {
-        this.velvetBox = GameState.nightEarnings;
-        this.eventPending = false;
-        AudioSystem.stop();
-        this.clockEvent?.remove();
-        this.barEvent?.remove();
-        this.guestSpawnTimer?.remove();
-        this.celebTimers.forEach(t => t?.remove());
+      this.scene.launch('EventPopup', {
+        event: raidEvent,
+        onClose: (result) => {
+          this.velvetBox = GameState.nightEarnings;
+          this.eventPending = false;
+          AudioSystem.stop();
+          this.clockEvent?.remove();
+          this.barEvent?.remove();
+          this.guestSpawnTimer?.remove();
+          this.celebTimers.forEach(t => t?.remove());
 
-        const seized = result?.seized || 0;
-        this.time.delayedCall(300, () => {
-          this.saveNightResult(0, seized);
-          if (this.velvetBox <= 0 && GameState.stash <= 0) {
-            GameState.bankrupt = true;
-            this.scene.start('GameOver', { reason: 'fbi' });
-          } else {
-            this.scene.start('EndNight');
-          }
-        });
-      },
+          const seized = result?.seized || 0;
+          this.time.delayedCall(300, () => {
+            this.saveNightResult(0, seized);
+            if (this.velvetBox <= 0 && GameState.stash <= 0) {
+              GameState.bankrupt = true;
+              this.scene.start('GameOver', { reason: 'fbi' });
+            } else {
+              this.scene.start('EndNight');
+            }
+          });
+        },
+      });
     });
   }
 
