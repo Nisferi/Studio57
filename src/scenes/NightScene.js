@@ -7,6 +7,7 @@ import { CELEBRITIES } from '../data/celebrities.js';
 import { NIGHT_EVENTS } from '../data/events.js';
 import { AudioSystem } from '../systems/AudioSystem.js';
 import { EconomySystem } from '../systems/EconomySystem.js';
+import { PixelUI } from '../systems/PixelUI.js';
 import {
   NIGHT_DURATION, GUEST_INTERVAL_MIN, GUEST_INTERVAL_MAX, BAR_TICK_MS,
   HIDE_AMOUNT, HIDE_FBI_GAIN,
@@ -452,63 +453,121 @@ export class NightScene extends Phaser.Scene {
   // ─── HUD ────────────────────────────────────────────────────────────────────
 
   buildHUD(W, H, L) {
-    const bg = this.add.rectangle(0, 0, W, 52, 0x000000, 0.88).setOrigin(0).setDepth(50);
+    const HUD_H = 58;
 
-    // Night label
-    this.add.text(8, 6, `${L.night_label} ${GameState.nightNumber}`, {
+    // ── Panel backing ─────────────────────────────────────────────────────────
+    // Dark translucent base
+    const hudBg = this.add.rectangle(0, 0, W, HUD_H, 0x000000, 0.91).setOrigin(0).setDepth(50);
+    // Bottom chrome edge
+    const edgeG = this.add.graphics().setDepth(50);
+    edgeG.fillStyle(0xffd700, 0.25);
+    edgeG.fillRect(0, HUD_H - 2, W, 2);
+    edgeG.fillStyle(0xffd700, 0.08);
+    edgeG.fillRect(0, HUD_H - 4, W, 2);
+
+    // ── Corner deco (pixel art chrome corners) ────────────────────────────────
+    const cG = this.add.graphics().setDepth(51);
+    cG.fillStyle(0xffd700, 0.55);
+    cG.fillRect(0,     0, 6, 2); cG.fillRect(0, 0, 2, 6);
+    cG.fillRect(W - 6, 0, 6, 2); cG.fillRect(W - 2, 0, 2, 6);
+    cG.fillRect(0,     HUD_H - 2, 6, 2); cG.fillRect(0, HUD_H - 6, 2, 6);
+    cG.fillRect(W - 6, HUD_H - 2, 6, 2); cG.fillRect(W - 2, HUD_H - 6, 2, 6);
+
+    // ── Night # pill ──────────────────────────────────────────────────────────
+    const nightPillG = this.add.graphics().setDepth(51);
+    nightPillG.fillStyle(0x1a0044, 0.9);
+    nightPillG.fillRoundedRect(5, 5, 62, 22, 3);
+    nightPillG.lineStyle(1, 0xffd700, 0.5);
+    nightPillG.strokeRoundedRect(5, 5, 62, 22, 3);
+    this.add.text(36, 16, `${L.night_label} ${GameState.nightNumber}`, {
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: '8px', color: '#ffd700',
+      fontSize: '7px', color: '#ffd700',
+    }).setOrigin(0.5).setDepth(52);
+
+    // Queue indicator
+    this.queueTxt = this.add.text(8, 44, '', {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '6px', color: '#888888',
     }).setDepth(51);
 
-    this.queueTxt = this.add.text(8, 42, '', {
+    // ── Timer (centred) ───────────────────────────────────────────────────────
+    const timerG = this.add.graphics().setDepth(51);
+    timerG.fillStyle(0x0a0020, 0.8);
+    timerG.fillRoundedRect(W / 2 - 42, 4, 84, 28, 3);
+    timerG.lineStyle(1, 0x4444aa, 0.5);
+    timerG.strokeRoundedRect(W / 2 - 42, 4, 84, 28, 3);
+    this.timerText = this.add.text(W / 2, 18, `⏱ ${NIGHT_DURATION}`, {
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: '7px', color: '#aaaaaa',
+      fontSize: '11px', color: '#aaaaff',
+      stroke: '#000000', strokeThickness: 2,
+    }).setOrigin(0.5).setDepth(52);
+
+    // ── Velvet box (left-centre) ──────────────────────────────────────────────
+    this.add.text(8, 32, '💰', { fontSize: '9px' }).setDepth(51);
+    this.velvetText = this.add.text(24, 33, `$0`, {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '8px', color: '#44ff88',
+      stroke: '#002211', strokeThickness: 2,
+    }).setDepth(52);
+
+    // ── Stash (below velvet) ──────────────────────────────────────────────────
+    this.add.text(8, 46, '🔒', { fontSize: '7px' }).setDepth(51);
+    this.stashText = this.add.text(22, 47, `$${GameState.stash}`, {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '7px', color: '#ff9922',
+      stroke: '#221100', strokeThickness: 2,
+    }).setDepth(52);
+
+    // ── FBI bar (right side) ──────────────────────────────────────────────────
+    const barX = W - 90;
+    const barW = 82;
+
+    // FBI label
+    this.add.text(barX - 1, 5, `${L.fbi}`, {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '6px', color: '#ff5555',
     }).setDepth(51);
 
-    // Timer
-    this.timerText = this.add.text(W / 2, 6, `${L.shift}: ${NIGHT_DURATION}`, {
-      fontFamily: '"Press Start 2P", monospace',
-      fontSize: '8px', color: '#ffffff',
-    }).setOrigin(0.5, 0).setDepth(51);
+    // FBI track
+    const fbiTrackG = this.add.graphics().setDepth(51);
+    fbiTrackG.fillStyle(0x2a0000, 0.9);
+    fbiTrackG.fillRect(barX, 15, barW, 10);
+    fbiTrackG.lineStyle(1, 0xff3333, 0.55);
+    fbiTrackG.strokeRect(barX, 15, barW, 10);
 
-    // Velvet box
-    this.velvetText = this.add.text(8, 26, `${L.velvet_box}: $0`, {
-      fontFamily: '"Press Start 2P", monospace',
-      fontSize: '8px', color: '#40ff80',
-    }).setDepth(51);
-
-    // Stash
-    this.stashText = this.add.text(W / 2, 26, `${L.stash}: $${GameState.stash}`, {
-      fontFamily: '"Press Start 2P", monospace',
-      fontSize: '8px', color: '#ff8800',
-    }).setOrigin(0.5, 0).setDepth(51);
-
-    // FBI bar (right side)
-    const fbiX = W - 8;
-    const fbiW = 85;
-    this.add.text(fbiX - fbiW - 26, 6, `${L.fbi}:`, {
-      fontFamily: '"Press Start 2P", monospace',
-      fontSize: '8px', color: '#ff4040',
-    }).setOrigin(1, 0).setDepth(51);
-
-    this.add.rectangle(fbiX - fbiW / 2, 16, fbiW, 10, 0x330000).setDepth(51);
-
-    this.fbiBar = this.add.rectangle(fbiX - fbiW + 1, 16, fbiW - 2, 8, 0xff2020)
+    this.fbiBar = this.add.rectangle(barX, 15 + 5, barW - 2, 8, 0xff2020)
       .setOrigin(0, 0.5).setDepth(52).setScale(0, 1);
 
-    this.add.rectangle(fbiX - fbiW / 2, 16, fbiW, 10)
-      .setStrokeStyle(1, 0xff4040).setDepth(52);
-
-    // Police heat bar
-    this.add.text(fbiX - fbiW - 26, 30, 'POLICE:', {
+    // Police label
+    this.add.text(barX - 1, 29, 'HEAT', {
       fontFamily: '"Press Start 2P", monospace',
       fontSize: '6px', color: '#4488ff',
-    }).setOrigin(1, 0).setDepth(51);
+    }).setDepth(51);
 
-    this.add.rectangle(fbiX - fbiW / 2, 39, fbiW, 8, 0x001133).setDepth(51);
+    // Police track
+    const heatTrackG = this.add.graphics().setDepth(51);
+    heatTrackG.fillStyle(0x00001a, 0.9);
+    heatTrackG.fillRect(barX, 39, barW, 8);
+    heatTrackG.lineStyle(1, 0x3366ff, 0.55);
+    heatTrackG.strokeRect(barX, 39, barW, 8);
 
-    this.policeBar = this.add.rectangle(fbiX - fbiW + 1, 39, fbiW - 2, 6, 0x4488ff)
+    this.policeBar = this.add.rectangle(barX, 39 + 4, barW - 2, 6, 0x4488ff)
       .setOrigin(0, 0.5).setDepth(52).setScale(0, 1);
+
+    // ── Reputation bar (bottom strip) ────────────────────────────────────────
+    this.repBarBg = this.add.graphics().setDepth(51);
+    this.repBarBg.fillStyle(0x110022, 0.7);
+    this.repBarBg.fillRect(W / 2 - 44, 38, 88, 8);
+    this.repBar = this.add.rectangle(W / 2 - 44, 42, 0, 6, 0xaa44ff)
+      .setOrigin(0, 0.5).setDepth(52);
+    this.repBarBg.lineStyle(1, 0x6622aa, 0.5);
+    this.repBarBg.strokeRect(W / 2 - 44, 38, 88, 8);
+
+    // Vertical dividers to separate HUD sections
+    const divG = this.add.graphics().setDepth(51);
+    divG.lineStyle(1, 0xffd700, 0.14);
+    divG.strokeLineShape(new Phaser.Geom.Line(W / 2 - 50, 4, W / 2 - 50, HUD_H - 4));
+    divG.strokeLineShape(new Phaser.Geom.Line(W / 2 + 50, 4, W / 2 + 50, HUD_H - 4));
 
     this.updateHUD(L);
   }
@@ -516,21 +575,37 @@ export class NightScene extends Phaser.Scene {
   updateHUD(L) {
     if (!L) L = LOCALES[GameState.lang];
     const safe = (v) => Math.max(0, v);
-    this.velvetText.setText(`${L.velvet_box}: $${safe(this.velvetBox)}`);
-    this.stashText.setText(`${L.stash}: $${safe(GameState.stash)}`);
-    this.timerText.setText(`${L.shift}: ${this.timeLeft}`);
 
-    const fbiPct   = Math.min(1, GameState.fbiSuspicion / 100);
+    this.velvetText.setText(`$${safe(this.velvetBox).toLocaleString()}`);
+    this.stashText.setText(`$${safe(GameState.stash).toLocaleString()}`);
+
+    const secs = this.timeLeft;
+    const timerColor = secs <= 10 ? '#ff4040' : secs <= 20 ? '#ffaa00' : '#aaaaff';
+    this.timerText.setText(`⏱ ${secs}`).setColor(timerColor);
+
+    const fbiPct    = Math.min(1, GameState.fbiSuspicion / 100);
     const policePct = Math.min(1, GameState.policeHeat / 100);
+    const repPct    = Math.min(1, GameState.reputation / 100);
 
-    this.tweens.add({ targets: this.fbiBar,   scaleX: fbiPct,   duration: 300, ease: 'Cubic.Out' });
-    this.tweens.add({ targets: this.policeBar, scaleX: policePct, duration: 300, ease: 'Cubic.Out' });
-    this.fbiBar.setFillStyle(fbiPct > 0.7 ? 0xff0000 : 0xff2020);
+    this.tweens.add({ targets: this.fbiBar,    scaleX: fbiPct,    duration: 300, ease: 'Cubic.Out' });
+    this.tweens.add({ targets: this.policeBar,  scaleX: policePct, duration: 300, ease: 'Cubic.Out' });
+    this.tweens.add({ targets: this.repBar, width: 86 * repPct,    duration: 300, ease: 'Cubic.Out' });
 
-    if (this.timeLeft <= 10) this.timerText.setColor('#ff4040');
+    const fbiCol = fbiPct > 0.7 ? 0xff0000 : fbiPct > 0.4 ? 0xff6600 : 0xff2020;
+    this.fbiBar.setFillStyle(fbiCol);
+
+    // FBI pulse flash when critical
+    if (fbiPct > 0.7 && !this._fbiPulsing) {
+      this._fbiPulsing = true;
+      this.tweens.add({
+        targets: this.fbiBar, alpha: { from: 1, to: 0.4 },
+        duration: 200, yoyo: true, repeat: 2,
+        onComplete: () => { this._fbiPulsing = false; },
+      });
+    }
 
     const qLen = this.guestQueue ? this.guestQueue.length : 0;
-    if (this.queueTxt) this.queueTxt.setText(qLen > 0 ? `▼ ${qLen} waiting` : '');
+    if (this.queueTxt) this.queueTxt.setText(qLen > 0 ? `▼ ${qLen}` : '');
   }
 
   // ─── GUEST CARD ─────────────────────────────────────────────────────────────
@@ -823,69 +898,121 @@ export class NightScene extends Phaser.Scene {
   // ─── DECISION BUTTONS ───────────────────────────────────────────────────────
 
   buildButtons(W, H, L) {
-    const btnY = H * 0.798;
-    const bw   = Math.min(W * 0.42, 158);
-    const bh   = 54;
+    const btnY = H * 0.800;
+    const bw   = Math.min(W * 0.43, 162);
+    const bh   = 58;
 
-    // ─── REJECT ────────────────────────────────────────────────────────────────
-    const rejBg = this.add.rectangle(W * 0.26, btnY, bw, bh, RED)
-      .setStrokeStyle(3, 0xFF7777).setInteractive().setDepth(30);
-    const rejBorderG = this.add.graphics().setDepth(31);
-    rejBorderG.lineStyle(1, 0xFF4466, 0.7);
-    rejBorderG.strokeRect(W * 0.26 - bw / 2 + 5, btnY - bh / 2 + 5, bw - 10, bh - 10);
-    const rejTxt = this.add.text(W * 0.26, btnY, `✗  ${L.reject}`, {
-      fontFamily: '"Press Start 2P", monospace',
-      fontSize: '10px', color: '#ffffff',
-      stroke: '#660011', strokeThickness: 2,
-    }).setOrigin(0.5).setDepth(32);
-    rejBg.on('pointerover', () => rejBg.setFillStyle(0xFF1133));
-    rejBg.on('pointerout',  () => rejBg.setFillStyle(RED));
-    rejBg.on('pointerdown', () => this.decide(false));
-    rejTxt.setInteractive(); rejTxt.on('pointerdown', () => this.decide(false));
+    // ─── REJECT (left) ─────────────────────────────────────────────────────────
+    const rejX = W * 0.255;
 
-    // ─── APPROVE ───────────────────────────────────────────────────────────────
-    const appBg = this.add.rectangle(W * 0.74, btnY, bw, bh, GREEN)
-      .setStrokeStyle(3, 0x77FF99).setInteractive().setDepth(30);
-    const appBorderG = this.add.graphics().setDepth(31);
-    appBorderG.lineStyle(1, 0x44EE77, 0.7);
-    appBorderG.strokeRect(W * 0.74 - bw / 2 + 5, btnY - bh / 2 + 5, bw - 10, bh - 10);
-    const appTxt = this.add.text(W * 0.74, btnY, `✓  ${L.approve}`, {
+    // Drop shadow
+    const rejShad = this.add.graphics().setDepth(28);
+    rejShad.fillStyle(0x000000, 0.55);
+    rejShad.fillRect(rejX - bw / 2 + 4, btnY - bh / 2 + 4, bw, bh);
+
+    const rejBg = this.add.rectangle(rejX, btnY, bw, bh, RED)
+      .setStrokeStyle(2, 0xFF7777).setInteractive().setDepth(29);
+
+    // Pixel highlight strips
+    const rejHL = this.add.graphics().setDepth(30);
+    rejHL.fillStyle(0xffffff, 0.22); rejHL.fillRect(rejX - bw / 2 + 3, btnY - bh / 2 + 3, bw - 6, 2);
+    rejHL.fillRect(rejX - bw / 2 + 3, btnY - bh / 2 + 3, 2, bh - 6);
+    rejHL.fillStyle(0x000000, 0.28); rejHL.fillRect(rejX - bw / 2 + 3, btnY + bh / 2 - 5, bw - 6, 2);
+    rejHL.fillRect(rejX + bw / 2 - 5, btnY - bh / 2 + 3, 2, bh - 6);
+
+    // Inner deco border
+    rejHL.lineStyle(1, 0xFF8888, 0.30);
+    rejHL.strokeRect(rejX - bw / 2 + 7, btnY - bh / 2 + 7, bw - 14, bh - 14);
+
+    const rejTxt = this.add.text(rejX, btnY - 2, `✗`, {
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: '10px', color: '#ffffff',
-      stroke: '#004422', strokeThickness: 2,
-    }).setOrigin(0.5).setDepth(32);
-    appBg.on('pointerover', () => appBg.setFillStyle(0x00EE55));
-    appBg.on('pointerout',  () => appBg.setFillStyle(GREEN));
-    appBg.on('pointerdown', () => this.decide(true));
-    appTxt.setInteractive(); appTxt.on('pointerdown', () => this.decide(true));
+      fontSize: '20px', color: '#ffffff',
+      stroke: '#660011', strokeThickness: 3,
+    }).setOrigin(0.5).setDepth(31);
+    const rejLbl = this.add.text(rejX, btnY + 16, L.reject, {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '8px', color: '#ffcccc',
+      stroke: '#440000', strokeThickness: 2,
+    }).setOrigin(0.5).setDepth(31);
+
+    const doReject = () => this.decide(false);
+    rejBg.on('pointerover', () => { rejBg.setFillStyle(0xFF1133); this.tweens.add({ targets: [rejBg, rejTxt, rejLbl, rejHL], scaleX: 1.04, scaleY: 1.04, duration: 60 }); });
+    rejBg.on('pointerout',  () => { rejBg.setFillStyle(RED);      this.tweens.add({ targets: [rejBg, rejTxt, rejLbl, rejHL], scaleX: 1,    scaleY: 1,    duration: 60 }); });
+    rejBg.on('pointerdown', doReject);
+    rejTxt.setInteractive(); rejTxt.on('pointerdown', doReject);
+    rejLbl.setInteractive(); rejLbl.on('pointerdown', doReject);
+
+    // ─── APPROVE (right) ───────────────────────────────────────────────────────
+    const appX = W * 0.745;
+
+    const appShad = this.add.graphics().setDepth(28);
+    appShad.fillStyle(0x000000, 0.55);
+    appShad.fillRect(appX - bw / 2 + 4, btnY - bh / 2 + 4, bw, bh);
+
+    const appBg = this.add.rectangle(appX, btnY, bw, bh, GREEN)
+      .setStrokeStyle(2, 0x77FF99).setInteractive().setDepth(29);
+
+    const appHL = this.add.graphics().setDepth(30);
+    appHL.fillStyle(0xffffff, 0.22); appHL.fillRect(appX - bw / 2 + 3, btnY - bh / 2 + 3, bw - 6, 2);
+    appHL.fillRect(appX - bw / 2 + 3, btnY - bh / 2 + 3, 2, bh - 6);
+    appHL.fillStyle(0x000000, 0.28); appHL.fillRect(appX - bw / 2 + 3, btnY + bh / 2 - 5, bw - 6, 2);
+    appHL.fillRect(appX + bw / 2 - 5, btnY - bh / 2 + 3, 2, bh - 6);
+    appHL.lineStyle(1, 0x88FF88, 0.30);
+    appHL.strokeRect(appX - bw / 2 + 7, btnY - bh / 2 + 7, bw - 14, bh - 14);
+
+    const appTxt = this.add.text(appX, btnY - 2, `✓`, {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '20px', color: '#ffffff',
+      stroke: '#004422', strokeThickness: 3,
+    }).setOrigin(0.5).setDepth(31);
+    const appLbl = this.add.text(appX, btnY + 16, L.approve, {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '8px', color: '#ccffcc',
+      stroke: '#002211', strokeThickness: 2,
+    }).setOrigin(0.5).setDepth(31);
+
+    const doApprove = () => this.decide(true);
+    appBg.on('pointerover', () => { appBg.setFillStyle(0x00EE55); this.tweens.add({ targets: [appBg, appTxt, appLbl, appHL], scaleX: 1.04, scaleY: 1.04, duration: 60 }); });
+    appBg.on('pointerout',  () => { appBg.setFillStyle(GREEN);    this.tweens.add({ targets: [appBg, appTxt, appLbl, appHL], scaleX: 1,    scaleY: 1,    duration: 60 }); });
+    appBg.on('pointerdown', doApprove);
+    appTxt.setInteractive(); appTxt.on('pointerdown', doApprove);
+    appLbl.setInteractive(); appLbl.on('pointerdown', doApprove);
 
     // ─── HIDE MONEY ────────────────────────────────────────────────────────────
-    const hideBg = this.add.rectangle(W / 2, H * 0.905, 200, 36, 0x5A3C00)
-      .setStrokeStyle(2, GOLD).setInteractive().setDepth(30);
-    const hideTxt = this.add.text(W / 2, H * 0.905, `💰 ${L.hide_money}`, {
+    const hideShad = this.add.graphics().setDepth(28);
+    hideShad.fillStyle(0x000000, 0.45);
+    hideShad.fillRect(W / 2 - 96, H * 0.905 - 15 + 3, 192, 32);
+
+    const hideBg = this.add.rectangle(W / 2, H * 0.905, 192, 32, 0x4A2E00)
+      .setStrokeStyle(2, GOLD).setInteractive().setDepth(29);
+
+    // Highlight
+    const hideHL = this.add.graphics().setDepth(30);
+    hideHL.fillStyle(0xffffff, 0.14);
+    hideHL.fillRect(W / 2 - 93, H * 0.905 - 14, 186, 2);
+
+    const hideTxt = this.add.text(W / 2, H * 0.905, `💰  ${L.hide_money}`, {
       fontFamily: '"Press Start 2P", monospace',
       fontSize: '8px', color: '#ffd700',
+      stroke: '#221100', strokeThickness: 2,
     }).setOrigin(0.5).setDepth(31);
-    hideBg.on('pointerover', () => hideBg.setFillStyle(0x7A5200));
-    hideBg.on('pointerout',  () => hideBg.setFillStyle(0x5A3C00));
+    hideBg.on('pointerover', () => { hideBg.setFillStyle(0x6A4200); this.tweens.add({ targets: [hideBg, hideTxt], scaleX: 1.03, scaleY: 1.03, duration: 60 }); });
+    hideBg.on('pointerout',  () => { hideBg.setFillStyle(0x4A2E00); this.tweens.add({ targets: [hideBg, hideTxt], scaleX: 1,    scaleY: 1,    duration: 60 }); });
     hideBg.on('pointerdown', () => this.hideMoney());
     hideTxt.setInteractive(); hideTxt.on('pointerdown', () => this.hideMoney());
 
-    // ─── CLUB VIEW ─────────────────────────────────────────────────────────────
-    const clubBg = this.add.rectangle(W * 0.87, H * 0.07, 72, 28, 0x200A60)
-      .setStrokeStyle(2, 0xAA66FF).setInteractive().setDepth(55);
-    const clubTxt = this.add.text(W * 0.87, H * 0.07, '👁 CLUB', {
-      fontFamily: '"Press Start 2P", monospace',
-      fontSize: '7px', color: '#CC88FF',
-    }).setOrigin(0.5).setDepth(56);
-    clubBg.on('pointerover',  () => clubBg.setFillStyle(0x300C80));
-    clubBg.on('pointerout',   () => clubBg.setFillStyle(0x200A60));
-    clubBg.on('pointerdown',  () => this.openClubView());
-    clubTxt.setInteractive(); clubTxt.on('pointerdown', () => this.openClubView());
+    // ─── CLUB VIEW (top right pill) ────────────────────────────────────────────
+    const { bg: clubBg } = PixelUI.button(this, W - 40, H * 0.07, 72, 26, '👁 CLUB', {
+      baseColor: 0x1e0858, hoverColor: 0x2e0c88,
+      borderColor: 0xAA66FF, textColor: '#CC88FF',
+      fontSize: '7px', depth: 55,
+    });
+    clubBg.on('pointerdown', () => this.openClubView());
 
-    this.add.text(W / 2, H * 0.965, '[A] Отказ  [D] Впустить  [H] Спрятать', {
+    // Keyboard hint
+    this.add.text(W / 2, H * 0.966, '[A] ✗ отказ   [D] ✓ впустить   [H] 💰 спрятать', {
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: '6px', color: '#665533',
+      fontSize: '5px', color: '#4a3322',
     }).setOrigin(0.5).setDepth(30);
   }
 

@@ -8,6 +8,7 @@ import { GameState } from '../GameState.js';
 import { LOCALES } from '../data/locales.js';
 import { getArnieLine } from '../data/arnie_lines.js';
 import { AudioSystem } from '../systems/AudioSystem.js';
+import { PixelUI } from '../systems/PixelUI.js';
 
 const DARK  = 0x020008;
 const GOLD  = 0xffd700;
@@ -330,21 +331,30 @@ export class StreetScene extends Phaser.Scene {
   }
 
   buildNeonSign(W, H) {
-    // Glow layers
     const glows = ['#ff00a0', '#ff40a8', '#ff80c0'];
     glows.forEach((c, i) => {
       this.add.text(W / 2, H * 0.17, 'STUDIO 57', {
         fontFamily: '"Press Start 2P", monospace',
         fontSize: '20px', color: c,
-        stroke: c, strokeThickness: (3 - i) * 6, alpha: 0.15 + i * 0.25,
-      }).setOrigin(0.5);
+        stroke: c, strokeThickness: (3 - i) * 6,
+      }).setOrigin(0.5).setAlpha(0.15 + i * 0.25);
     });
-    this.add.text(W / 2, H * 0.17, 'STUDIO 57', {
+    this.neonTop = this.add.text(W / 2, H * 0.17, 'STUDIO 57', {
       fontFamily: '"Press Start 2P", monospace',
       fontSize: '20px', color: '#ffffff',
     }).setOrigin(0.5);
 
-    // Night number
+    // Random neon flicker
+    const flicker = () => {
+      this.neonTop.setAlpha(Math.random() > 0.15 ? 1 : 0.25);
+      this.time.delayedCall(55 + Math.random() * 90, () => {
+        this.neonTop?.setAlpha(1);
+        this.time.delayedCall(2200 + Math.random() * 4000, flicker);
+      });
+    };
+    this.time.delayedCall(1200 + Math.random() * 1800, flicker);
+
+    // Night label + year
     const L = LOCALES[GameState.lang];
     this.add.text(W / 2, H * 0.24, `${L.night_label} ${GameState.nightNumber}  ·  ${this.getEpochYear()}`, {
       fontFamily: '"Press Start 2P", monospace',
@@ -361,41 +371,70 @@ export class StreetScene extends Phaser.Scene {
   // ─── CROWD ─────────────────────────────────────────────────────────────────
 
   buildCrowd(W, H) {
-    const count = 35 + GameState.reputation;        // more reputation = bigger crowd
-    const g = this.add.graphics();
-
-    // Crowd occupies H 0.55 – 0.70
-    for (let i = 0; i < count; i++) {
-      const cx  = W * 0.04 + Math.random() * W * 0.92;
-      const row = Math.floor(Math.random() * 3);
-      const cy  = H * 0.58 + row * 10 + Math.random() * 5;
+    // Back-row static silhouettes (depth 0)
+    const staticG = this.add.graphics().setDepth(0);
+    for (let i = 0; i < 22; i++) {
+      const cx  = W * 0.05 + Math.random() * W * 0.90;
+      const cy  = H * 0.585 + Math.random() * 8;
       const col = CROWD_COLORS[Math.floor(Math.random() * CROWD_COLORS.length)];
-
-      g.fillStyle(col, 0.7 + Math.random() * 0.3);
-      // Head
-      g.fillCircle(cx, cy - 8, 4);
-      // Body
-      g.fillRect(cx - 3, cy - 4, 6, 10);
+      staticG.fillStyle(col, 0.45 + Math.random() * 0.25);
+      staticG.fillCircle(cx, cy - 6, 3);
+      staticG.fillRect(cx - 2, cy - 3, 5, 8);
     }
 
-    // Velvet rope posts
-    g.fillStyle(0xd4a030);
+    // Front-row animated containers (depth 1)
+    const frontCount = Math.min(18, 12 + Math.floor(GameState.reputation / 6));
+    for (let i = 0; i < frontCount; i++) {
+      const col   = CROWD_COLORS[Math.floor(Math.random() * CROWD_COLORS.length)];
+      const scale = 0.8 + Math.random() * 0.55;
+      const cx    = W * 0.04 + Math.random() * W * 0.92;
+      const cy    = H * 0.615 + Math.floor(Math.random() * 2) * 9;
+
+      const fig = this.add.graphics();
+      fig.fillStyle(col, 0.85 + Math.random() * 0.15);
+      // Head
+      fig.fillCircle(0, -9, 4);
+      // Body
+      fig.fillRect(-3, -5, 6, 10);
+      // Arms — three random poses
+      const arm = Math.floor(Math.random() * 3);
+      if (arm === 0) { fig.fillRect(-7, -3, 4, 2); fig.fillRect(3, -3, 4, 2); }
+      else if (arm === 1) { fig.fillRect(-8, -6, 5, 2); fig.fillRect(3, -6, 5, 2); }
+      else { fig.fillRect(-6, -1, 3, 2); fig.fillRect(3, -1, 3, 2); }
+
+      const c = this.add.container(cx, cy, [fig]).setScale(scale).setDepth(1);
+      this.tweens.add({
+        targets: c,
+        y: cy - (2 + Math.random() * 3),
+        duration: 600 + Math.random() * 700,
+        yoyo: true, repeat: -1,
+        ease: 'Sine.InOut',
+        delay: Math.random() * 1100,
+      });
+    }
+
+    // Velvet rope (depth 3, on top of crowd)
+    const ropeG = this.add.graphics().setDepth(3);
+    ropeG.fillStyle(0xd4a030);
     [[W * 0.10, H * 0.65], [W * 0.90, H * 0.65]].forEach(([px, py]) => {
-      g.fillRect(px - 3, py - 40, 6, 46);
-      g.fillCircle(px, py - 40, 6);
+      ropeG.fillRect(px - 3, py - 40, 6, 46);
+      ropeG.fillCircle(px, py - 40, 6);
+      // Golden finial
+      ropeG.fillStyle(0xffe050);
+      ropeG.fillCircle(px, py - 46, 4);
+      ropeG.fillStyle(0xd4a030);
     });
-    g.lineStyle(6, 0x880044);
-    g.beginPath();
-    g.moveTo(W * 0.10, H * 0.63);
+    ropeG.lineStyle(6, 0x880044);
+    ropeG.beginPath();
     for (let i = 0; i <= 20; i++) {
       const t  = i / 20;
       const bx = Phaser.Math.Linear(W * 0.10, W * 0.90, t);
-      const by = H * 0.63 + Math.sin(t * Math.PI) * 12;
-      i === 0 ? g.moveTo(bx, by) : g.lineTo(bx, by);
+      const by = H * 0.63 + Math.sin(t * Math.PI) * 14;
+      i === 0 ? ropeG.moveTo(bx, by) : ropeG.lineTo(bx, by);
     }
-    g.strokePath();
+    ropeG.strokePath();
 
-    // Paparazzi (camera flash effect) — right of crowd
+    // Paparazzi flash (depth 5)
     this.paparazziG = this.add.graphics().setDepth(5);
     this.time.addEvent({
       delay: Phaser.Math.Between(2000, 4000),
@@ -415,63 +454,67 @@ export class StreetScene extends Phaser.Scene {
   // ─── UI ────────────────────────────────────────────────────────────────────
 
   buildUI(W, H, L) {
-    // HUD bar
-    this.add.rectangle(0, 0, W, 44, 0x000000, 0.88).setOrigin(0).setDepth(20);
+    // ── HUD bar (chrome pixel style) ────────────────────────────────────────
+    this.add.rectangle(0, 0, W, 46, 0x000000, 0.92).setOrigin(0).setDepth(20);
 
-    // Night + stats
-    this.add.text(8, 8, `${L.night_label} ${GameState.nightNumber}`, {
+    const hudG = this.add.graphics().setDepth(21);
+    // Gold bottom edge
+    hudG.fillStyle(GOLD, 0.30);
+    hudG.fillRect(0, 44, W, 2);
+    // Corner accents
+    hudG.fillStyle(GOLD, 0.55);
+    [[0, 0], [W - 6, 0], [0, 38], [W - 6, 38]].forEach(([hx, hy]) =>
+      hudG.fillRect(hx, hy, 6, 6)
+    );
+    // Vertical dividers
+    hudG.fillStyle(GOLD, 0.15);
+    hudG.fillRect(Math.floor(W * 0.34), 5, 1, 33);
+    hudG.fillRect(Math.floor(W * 0.67), 5, 1, 33);
+
+    this.add.text(10, 9, `${L.night_label} ${GameState.nightNumber}`, {
       fontFamily: '"Press Start 2P", monospace',
       fontSize: '8px', color: '#ffd700',
-    }).setDepth(21);
+      stroke: '#000000', strokeThickness: 2,
+    }).setDepth(22);
 
-    this.add.text(W / 2, 8, `${L.stash}: $${GameState.stash}`, {
+    this.add.text(W / 2, 9, `🔒 $${GameState.stash.toLocaleString()}`, {
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: '8px', color: '#ff8800',
-    }).setOrigin(0.5, 0).setDepth(21);
+      fontSize: '7px', color: '#ff9922',
+      stroke: '#000000', strokeThickness: 2,
+    }).setOrigin(0.5, 0).setDepth(22);
 
-    this.add.text(W - 8, 8, `REP: ${GameState.reputation}`, {
+    this.add.text(W - 10, 9, `★ ${GameState.reputation}`, {
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: '8px', color: '#4488ff',
-    }).setOrigin(1, 0).setDepth(21);
+      fontSize: '8px', color: '#aa44ff',
+      stroke: '#000000', strokeThickness: 2,
+    }).setOrigin(1, 0).setDepth(22);
 
-    // Crowd count
-    this.crowdTxt = this.add.text(W / 2, H * 0.72, '', {
+    // ── Crowd count + timer ────────────────────────────────────────────────
+    this.crowdTxt = this.add.text(W / 2, H * 0.715, '', {
       fontFamily: '"Press Start 2P", monospace',
       fontSize: '7px', color: '#888888',
-    }).setOrigin(0.5);
+    }).setOrigin(0.5).setDepth(10);
     this.updateCrowdTxt();
 
-    // Timer
-    this.timerTxt = this.add.text(W / 2, H * 0.76, '', {
+    this.timerTxt = this.add.text(W / 2, H * 0.750, '', {
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: '8px', color: '#ffffff',
+      fontSize: '9px', color: '#88bbff',
+      stroke: '#000000', strokeThickness: 2,
     }).setOrigin(0.5).setDepth(21);
 
-    // OPEN DOORS button
-    const openBg = this.add.rectangle(W / 2, H * 0.89, 200, 48, 0x006620)
-      .setStrokeStyle(2, 0x44ff88).setInteractive().setDepth(20);
-    const openTxt = this.add.text(W / 2, H * 0.89, L.office_open || 'OPEN TONIGHT', {
-      fontFamily: '"Press Start 2P", monospace',
-      fontSize: '9px', color: '#ffffff',
-    }).setOrigin(0.5).setDepth(21).setInteractive();
+    // ── OPEN DOORS button (3D pixel style) ────────────────────────────────
+    const { bg: openBg } = PixelUI.button(
+      this, W / 2, H * 0.885, 210, 48,
+      `🚪 ${L.office_open || 'OPEN TONIGHT'}`,
+      { baseColor: 0x004d22, hoverColor: 0x007733, borderColor: 0x44ff88, fontSize: '8px', depth: 20 }
+    );
+    openBg.on('pointerdown', () => this.openDoors());
 
-    const openDoors = () => this.openDoors();
-    openBg.on('pointerdown', openDoors);
-    openTxt.on('pointerdown', openDoors);
-    openBg.on('pointerover', () => openBg.setFillStyle(0x009940));
-    openBg.on('pointerout',  () => openBg.setFillStyle(0x006620));
-
-    // Hype button — delay entry to build crowd
-    const hypeBg = this.add.rectangle(W * 0.22, H * 0.89, 80, 36, 0x440066)
-      .setStrokeStyle(1, PINK).setInteractive().setDepth(20);
-    this.add.text(W * 0.22, H * 0.89, '⏳ HYPE', {
-      fontFamily: '"Press Start 2P", monospace',
-      fontSize: '7px', color: '#ff00a0',
-    }).setOrigin(0.5).setDepth(21).setInteractive()
-      .on('pointerdown', () => this.hypeDelay());
-
-    hypeBg.on('pointerover', () => hypeBg.setFillStyle(0x660088));
-    hypeBg.on('pointerout',  () => hypeBg.setFillStyle(0x440066));
+    // ── HYPE button ────────────────────────────────────────────────────────
+    const { bg: hypeBg } = PixelUI.button(
+      this, W * 0.20, H * 0.885, 82, 36, '⏳ HYPE',
+      { baseColor: 0x440066, hoverColor: 0x660099, borderColor: PINK, textColor: '#ff44cc', fontSize: '7px', depth: 20 }
+    );
     hypeBg.on('pointerdown', () => this.hypeDelay());
   }
 
@@ -485,32 +528,30 @@ export class StreetScene extends Phaser.Scene {
 
   buildArnieDialogue(W, H) {
     const line = getArnieLine(GameState);
-    const lang = GameState.lang;
 
-    // Arnie portrait area
-    const px = W * 0.10;
-    const py = H * 0.78;
-    const bw = W * 0.78;
-    const bh = 50;
+    const bw  = W * 0.84;
+    const bh  = 56;
+    const py  = H * 0.795;
+    const px  = W / 2 - bw / 2 + 6;
 
-    this.add.rectangle(W / 2, py, bw, bh, 0x000000, 0.82)
-      .setStrokeStyle(1, 0x333333).setDepth(10);
+    PixelUI.panel(this, W / 2, py, bw, bh, {
+      bgColor: 0x04020e, bgAlpha: 0.93,
+      borderColor: 0xffd700, cornerSize: 5, depth: 10,
+    });
 
-    // Pixel Arnie face
-    this.drawArnieFace(px - 16, py, line.portrait);
+    // Pixel Arnie face (left edge)
+    this.drawArnieFace(W * 0.08, py, line.portrait);
 
-    // Arnie name label
-    this.add.text(px + 2, py - bh / 2 + 6, 'ARNIE:', {
+    // Label + line
+    this.add.text(px + 18, py - bh / 2 + 8, 'ARNIE:', {
       fontFamily: '"Press Start 2P", monospace',
       fontSize: '6px', color: '#ffd700',
-    }).setDepth(11);
-
-    // Dialogue text
-    this.add.text(px + 2, py - bh / 2 + 18, line.text, {
+    }).setDepth(12);
+    this.add.text(px + 18, py - bh / 2 + 22, line.text, {
       fontFamily: '"Press Start 2P", monospace',
       fontSize: '6px', color: '#cccccc',
-      wordWrap: { width: bw - 26 }, lineSpacing: 4,
-    }).setDepth(11);
+      wordWrap: { width: bw - 52 }, lineSpacing: 4,
+    }).setDepth(12);
   }
 
   drawArnieFace(x, y, portrait) {

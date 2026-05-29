@@ -4,6 +4,7 @@ import { SaveSystem } from '../SaveSystem.js';
 import { LOCALES } from '../data/locales.js';
 import { UPGRADES, getUpgradeNextLevel } from '../data/upgrades.js';
 import { getArnieLine } from '../data/arnie_lines.js';
+import { PixelUI } from '../systems/PixelUI.js';
 
 const DARK = 0x020008;
 const GOLD = 0xffd700;
@@ -28,24 +29,27 @@ export class OfficeScene extends Phaser.Scene {
     this.drawOfficeBg(W, H);
 
     // Title
-    this.add.text(W / 2, H * 0.06, L.office_title, {
-      fontFamily: '"Press Start 2P", monospace',
-      fontSize: '11px', color: '#ffd700',
-      stroke: '#000000', strokeThickness: 3,
-    }).setOrigin(0.5);
+    PixelUI.neonText(this, W / 2, H * 0.06, L.office_title, '11px', '#ffd700', {
+      depth: 3, glowLayers: [10, 5, 2], glowAlphas: [0.10, 0.20, 0.38],
+    });
 
-    this.add.text(W / 2, H * 0.12, L.office_sub, {
+    this.add.text(W / 2, H * 0.115, L.office_sub, {
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: '7px', color: '#888888',
+      fontSize: '7px', color: '#666688',
     }).setOrigin(0.5);
 
     // Funds display
     const funds = GameState.velvetBox + GameState.stash;
-    this.fundsText = this.add.text(W / 2, H * 0.18, `${L.office_funds}: $${funds}`, {
+    const fundsG = this.add.graphics().setDepth(3);
+    fundsG.fillStyle(0x002211, 0.90);
+    fundsG.fillRoundedRect(W / 2 - 110, H * 0.155, 220, 22, 5);
+    fundsG.lineStyle(1, 0x44ff88, 0.45);
+    fundsG.strokeRoundedRect(W / 2 - 110, H * 0.155, 220, 22, 5);
+    this.fundsText = this.add.text(W / 2, H * 0.166, `💰 ${L.office_funds}: $${funds.toLocaleString()}`, {
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: '10px', color: '#40ff80',
+      fontSize: '8px', color: '#40ff80',
       stroke: '#000000', strokeThickness: 2,
-    }).setOrigin(0.5);
+    }).setOrigin(0.5).setDepth(4);
 
     // Upgrade cards
     const cardH   = (H * 0.52) / UPGRADE_KEYS.length;
@@ -75,11 +79,19 @@ export class OfficeScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // EVENTS button
-    this.makeBtn(W * 0.27, H * 0.87, 140, 34, lang === 'ru' ? '📅 ЭВЕНТ' : '📅 EVENTS',
-      0x1a0040, 0x2a0060, () => this.scene.start('Events'));
+    const { bg: evBg } = PixelUI.button(
+      this, W * 0.27, H * 0.87, 140, 34,
+      lang === 'ru' ? '📅 ЭВЕНТ' : '📅 EVENTS',
+      { baseColor: 0x1a0040, hoverColor: 0x2a0060, borderColor: 0x8844ff, fontSize: '8px', depth: 10 }
+    );
+    evBg.on('pointerdown', () => this.scene.start('Events'));
 
     // OPEN TONIGHT button
-    this.makeBtn(W * 0.73, H * 0.87, 140, 34, L.office_open, 0x006620, 0x009940, () => {
+    const { bg: openBg } = PixelUI.button(
+      this, W * 0.73, H * 0.87, 140, 34, L.office_open,
+      { baseColor: 0x004d22, hoverColor: 0x007733, borderColor: 0x44ff88, fontSize: '8px', depth: 10 }
+    );
+    openBg.on('pointerdown', () => {
       GameState.resetNightStats();
       SaveSystem.save();
       this.scene.start('Street');
@@ -88,8 +100,8 @@ export class OfficeScene extends Phaser.Scene {
     // Back to menu
     this.add.text(W * 0.08, H * 0.03, '←', {
       fontFamily: '"Press Start 2P", monospace',
-      fontSize: '12px', color: '#888888',
-      backgroundColor: '#111111',
+      fontSize: '12px', color: '#666688',
+      backgroundColor: '#0a0018',
       padding: { x: 8, y: 4 },
     }).setInteractive().on('pointerdown', () => this.scene.start('Menu'));
   }
@@ -190,36 +202,44 @@ export class OfficeScene extends Phaser.Scene {
   }
 
   buildArniePanel(W, H) {
-    const line   = getArnieLine(GameState);
-    const panW   = W * 0.88;
-    const panH   = 66;
-    const panY   = H * 0.80;
+    const line  = getArnieLine(GameState);
+    const panW  = W * 0.88;
+    const panH  = 60;
+    const panY  = H * 0.805;
 
-    const bg = this.add.rectangle(W / 2, panY, panW, panH, 0x0d0820)
-      .setStrokeStyle(1, 0x332266);
-
-    // Small avatar circle
-    const avatarX = W / 2 - panW / 2 + 20;
-    const g = this.add.graphics();
-    g.fillStyle(0x3a2a6a);
-    g.fillCircle(avatarX, panY, 14);
-    g.lineStyle(1, 0x6644aa);
-    g.strokeCircle(avatarX, panY, 14);
-    // Eyes
-    g.fillStyle(0xffffff);
-    g.fillCircle(avatarX - 4, panY - 2, 2);
-    g.fillCircle(avatarX + 4, panY - 2, 2);
-
-    this.add.text(avatarX + 24, panY - panH / 2 + 8, 'ARNIE:', {
-      fontFamily: '"Press Start 2P", monospace',
-      fontSize: '7px', color: '#aa88ff',
+    PixelUI.panel(this, W / 2, panY, panW, panH, {
+      bgColor: 0x06020f, bgAlpha: 0.95,
+      borderColor: 0xffd700, cornerSize: 5, depth: 8,
     });
 
-    this.add.text(avatarX + 24, panY - panH / 2 + 22, line.text, {
+    const avatarX = W / 2 - panW / 2 + 22;
+    const ag = this.add.graphics().setDepth(9);
+    // Avatar background
+    ag.fillStyle(0x1a0a3a);
+    ag.fillCircle(avatarX, panY, 16);
+    ag.lineStyle(1, 0x6644aa, 0.8);
+    ag.strokeCircle(avatarX, panY, 16);
+    // Simple face
+    ag.fillStyle(0xd4a574);
+    ag.fillRect(avatarX - 7, panY - 8, 14, 14);
+    ag.fillStyle(0x1a0a00);
+    ag.fillRect(avatarX - 7, panY - 12, 14, 5);
+    ag.fillStyle(0x222222);
+    ag.fillRect(avatarX - 4, panY - 5, 2, 2);
+    ag.fillRect(avatarX + 2, panY - 5, 2, 2);
+    ag.fillStyle(0x993333);
+    ag.fillRect(avatarX - 3, panY + 1, 6, 2);
+
+    const tx = avatarX + 24;
+    this.add.text(tx, panY - panH / 2 + 9, 'ARNIE:', {
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: '7px', color: '#ffd700',
+    }).setDepth(9);
+    this.add.text(tx, panY - panH / 2 + 23, line.text, {
       fontFamily: '"Press Start 2P", monospace',
       fontSize: '6px', color: '#cccccc',
-      wordWrap: { width: panW - avatarX - 20 },
-    });
+      wordWrap: { width: panW - 60 }, lineSpacing: 3,
+    }).setDepth(9);
   }
 
   drawOfficeBg(W, H) {
