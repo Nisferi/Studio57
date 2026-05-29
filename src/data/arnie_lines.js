@@ -32,8 +32,8 @@ export const ARNIE_LINES = [
     priority: 8,
     portrait: 'nervous',
     text: {
-      ru: `$${'{stash}'} в вентиляции. Виктор — это уже не игра. Надо вывести деньги.`,
-      en: `$${'stash'} in the ducts. Victor — this isn't a game anymore. We need to move the money.`,
+      ru: '${stash} в вентиляции. Виктор — это уже не игра. Надо вывести деньги.',
+      en: '${stash} in the ducts. Victor — this isn\'t a game anymore. We need to move the money.',
     },
   },
   {
@@ -118,8 +118,48 @@ export const ARNIE_LINES = [
     priority: 8,
     portrait: 'serious',
     text: {
-      ru: 'С сегодня только 21+. Полиция предупредила. И дресс-код — без исключений.',
-      en: "21+ only from tonight. Police warned us. And dress code — no exceptions.",
+      ru: 'С сегодня только 21+. Полиция предупредила. И дресс-код — без исключений. Смотри на ID внимательно.',
+      en: "21+ only from tonight. Police warned us. Dress code — no exceptions. Look at the IDs closely.",
+    },
+  },
+  {
+    id: 'night_5_fake_ids',
+    condition: gs => gs.nightNumber === 5,
+    priority: 7,
+    portrait: 'worried',
+    text: {
+      ru: 'Начали ходить с фальшивыми ID. Смотри на печать — если размытая или желтоватая, это подделка.',
+      en: "They're coming in with fake IDs now. Check the print — if it looks blurry or yellowish, it's a fake.",
+    },
+  },
+  {
+    id: 'night_6_heat',
+    condition: gs => gs.nightNumber === 6 && gs.fbiSuspicion >= 30,
+    priority: 8,
+    portrait: 'tense',
+    text: {
+      ru: 'Шестая ночь. ФБР нюхает воздух. Не прячь сегодня — пусть касса выглядит чистой.',
+      en: "Night six. FBI is sniffing around. Don't hide tonight — let the books look clean.",
+    },
+  },
+  {
+    id: 'night_6_ok',
+    condition: gs => gs.nightNumber === 6 && gs.fbiSuspicion < 30,
+    priority: 6,
+    portrait: 'pleased',
+    text: {
+      ru: 'Шесть ночей. Ты держишься. Ещё немного — и мы сможем думать о расширении.',
+      en: "Six nights. You're holding on. A bit more — and we can think about expanding.",
+    },
+  },
+  {
+    id: 'night_7_danger',
+    condition: gs => gs.nightNumber === 7,
+    priority: 8,
+    portrait: 'scared',
+    text: {
+      ru: 'Седьмая. В газете написали про нас. Жди журналистов и агентов. Будь осторожен с тайником.',
+      en: "Night seven. The papers wrote about us. Expect journalists and agents. Be careful with the stash.",
     },
   },
   {

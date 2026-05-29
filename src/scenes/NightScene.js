@@ -493,9 +493,8 @@ export class NightScene extends Phaser.Scene {
 
     this.add.rectangle(fbiX - fbiW / 2, 16, fbiW, 10, 0x330000).setDepth(51);
 
-    this.fbiBar = this.add.rectangle(fbiX - fbiW + 1, 16, 0, 8, 0xff2020)
-      .setOrigin(0, 0.5).setDepth(52);
-    this.fbiBarMax = fbiW - 2;
+    this.fbiBar = this.add.rectangle(fbiX - fbiW + 1, 16, fbiW - 2, 8, 0xff2020)
+      .setOrigin(0, 0.5).setDepth(52).setScale(0, 1);
 
     this.add.rectangle(fbiX - fbiW / 2, 16, fbiW, 10)
       .setStrokeStyle(1, 0xff4040).setDepth(52);
@@ -508,8 +507,8 @@ export class NightScene extends Phaser.Scene {
 
     this.add.rectangle(fbiX - fbiW / 2, 39, fbiW, 8, 0x001133).setDepth(51);
 
-    this.policeBar = this.add.rectangle(fbiX - fbiW + 1, 39, 0, 6, 0x4488ff)
-      .setOrigin(0, 0.5).setDepth(52);
+    this.policeBar = this.add.rectangle(fbiX - fbiW + 1, 39, fbiW - 2, 6, 0x4488ff)
+      .setOrigin(0, 0.5).setDepth(52).setScale(0, 1);
 
     this.updateHUD(L);
   }
@@ -523,11 +522,12 @@ export class NightScene extends Phaser.Scene {
 
     const fbiPct   = Math.min(1, GameState.fbiSuspicion / 100);
     const policePct = Math.min(1, GameState.policeHeat / 100);
-    this.fbiBar.width   = fbiPct   * this.fbiBarMax;
-    this.policeBar.width = policePct * this.fbiBarMax;
+
+    this.tweens.add({ targets: this.fbiBar,   scaleX: fbiPct,   duration: 300, ease: 'Cubic.Out' });
+    this.tweens.add({ targets: this.policeBar, scaleX: policePct, duration: 300, ease: 'Cubic.Out' });
+    this.fbiBar.setFillStyle(fbiPct > 0.7 ? 0xff0000 : 0xff2020);
 
     if (this.timeLeft <= 10) this.timerText.setColor('#ff4040');
-    if (fbiPct > 0.7) this.fbiBar.setFillStyle(0xff0000);
 
     const qLen = this.guestQueue ? this.guestQueue.length : 0;
     if (this.queueTxt) this.queueTxt.setText(qLen > 0 ? `▼ ${qLen} waiting` : '');
@@ -687,18 +687,24 @@ export class NightScene extends Phaser.Scene {
 
     this.stampTxt.setText('');
 
-    // Night 4+: subtle visual hint that the ID might be tampered
+    // Night 4+: visual hint that the ID might be tampered (fake ID clues)
     this.fakeIdHintG.clear().setVisible(false);
     if (guest.hasFakeId && GameState.nightNumber >= 4) {
       const ch = this.cardH;
       const cw = this.cardW;
       const tx = this.portraitOffX + this.portraitW / 2 + 12;
-      // Faint yellow tint over the age line
-      this.fakeIdHintG.fillStyle(0xffee00, 0.10);
-      this.fakeIdHintG.fillRect(tx - 4, -ch / 2 + 32, cw * 0.45, 18);
-      // Tiny "ink bleed" dot near birthdate — suggests reprinted card
-      this.fakeIdHintG.fillStyle(0x442200, 0.30);
-      this.fakeIdHintG.fillRect(tx + cw * 0.38, -ch / 2 + 36, 3, 3);
+      // Slightly yellowed tint over the age/DOB area — like corrected ink
+      this.fakeIdHintG.fillStyle(0xffdd00, 0.18);
+      this.fakeIdHintG.fillRect(tx - 4, -ch / 2 + 30, cw * 0.47, 22);
+      // Misaligned edge — one side of DOB field has a pixel gap
+      this.fakeIdHintG.lineStyle(1, 0xaa7700, 0.55);
+      this.fakeIdHintG.strokeRect(tx - 4, -ch / 2 + 30, cw * 0.47, 22);
+      // "Ink bleed" cluster — suggests photo-copied / laser-reprinted area
+      this.fakeIdHintG.fillStyle(0x663300, 0.45);
+      this.fakeIdHintG.fillRect(tx + cw * 0.38, -ch / 2 + 34, 3, 2);
+      this.fakeIdHintG.fillRect(tx + cw * 0.40, -ch / 2 + 38, 2, 2);
+      this.fakeIdHintG.fillStyle(0x886622, 0.35);
+      this.fakeIdHintG.fillRect(tx + cw * 0.36, -ch / 2 + 37, 2, 1);
       this.fakeIdHintG.setVisible(true);
     }
 
@@ -1265,10 +1271,12 @@ export class NightScene extends Phaser.Scene {
   maybeFireEvent(L) {
     if (this.eventPending) return;
     const nightNum = GameState.nightNumber;
+    const fired = GameState.nightStats.firedEventIds;
     for (const ev of NIGHT_EVENTS) {
       if (ev.unlockNight > nightNum) continue;
       if (ev.id === 'corrupt_cop') continue; // Collins scheduled separately
-      if (Math.random() < ev.chance * 0.15) { // scaled down per-guest check
+      if (fired.includes(ev.id)) continue;
+      if (Math.random() < ev.chance * 0.15) {
         this.fireEvent(ev, L);
         return;
       }

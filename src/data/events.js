@@ -214,6 +214,95 @@ export const NIGHT_EVENTS = [
   },
 
   {
+    id: 'brawl_entrance_random',
+    unlockNight: 2,
+    chance: 0.10,
+    title_safe:   { ru: '⚔ ПЬЯНЫЙ У ВХОДА',   en: '⚔ DRUNK AT THE DOOR'   },
+    title_adult:  { ru: '⚔ БОЙНЯ У ШНУРА',     en: '⚔ BRAWL AT THE ROPE'   },
+    title_max:    { ru: '⚔ КРОВЬ НА ТРОТУАРЕ', en: '⚔ BLOOD ON THE SIDEWALK' },
+    body_safe: {
+      ru: 'Пьяный посетитель устроил скандал у входа. Нет охранника — никто не вмешивается.',
+      en: 'A drunk patron is making a scene at the entrance. No bouncer — nobody steps in.',
+    },
+    body_adult: {
+      ru: 'Пьяный Кевин бьёт Тони. Улица смотрит. Если не остановить — полиция приедет.',
+      en: 'Drunk Kevin is swinging at Tony. The street is watching. Stop it or the cops come.',
+    },
+    body_max: {
+      ru: 'Кровь на тротуаре. Двое дерутся, третий уже без сознания. Ваша охрана — это вы.',
+      en: 'Blood on the sidewalk. Two fighting, one already down. Your security — is you.',
+    },
+    choices: [
+      { key: 'intervene', label: { ru: 'ВМЕШАТЬСЯ',       en: 'STEP IN'       } },
+      { key: 'call_cops', label: { ru: 'ВЫЗВАТЬ ПОЛИЦИЮ', en: 'CALL THE COPS' } },
+      { key: 'ignore',    label: { ru: 'ЗАКРЫТЬ ДВЕРЬ',   en: 'CLOSE THE DOOR' } },
+    ],
+    resolve(choice, GameState) {
+      if (choice === 'intervene') {
+        GameState.reputation = Math.max(0, GameState.reputation - 3);
+        GameState.policeHeat = Math.min(100, GameState.policeHeat + 5);
+        return { ok: true, msg: 'Broke it up. REP -3.' };
+      }
+      if (choice === 'call_cops') {
+        GameState.policeHeat = Math.min(100, GameState.policeHeat + 25);
+        GameState.fbiSuspicion = Math.min(100, GameState.fbiSuspicion + 5);
+        return { ok: false, msg: 'Cops came. HEAT +25.' };
+      }
+      GameState.reputation = Math.max(0, GameState.reputation - 5);
+      GameState.policeHeat = Math.min(100, GameState.policeHeat + 15);
+      return { ok: false, msg: 'Escalated! REP -5.', dmgToVelvet: 400 };
+    },
+  },
+
+  {
+    id: 'collins_escalation',
+    unlockNight: 6,
+    chance: 0.20,
+    title_safe:   { ru: '🚔 ЗНАКОМЫЙ КОП',        en: '🚔 FAMILIAR COP'          },
+    title_adult:  { ru: '🚔 КОЛЛИНЗ ХОЧЕТ БОЛЬШЕ', en: '🚔 COLLINS WANTS MORE'    },
+    title_max:    { ru: '🚔 КОЛЛИНЗ: ЭТО ПОСЛЕДНИЙ РАЗ', en: '🚔 COLLINS: LAST CHANCE' },
+    body_safe: {
+      ru: 'Полицейский намекает, что его терпение не безграничное. Хочет компенсацию.',
+      en: "An officer hints his patience isn't unlimited. He wants compensation.",
+    },
+    body_adult: {
+      ru: 'Коллинз злой. «Тысяча. Сейчас. Или я перестаю смотреть в другую сторону».',
+      en: 'Collins is angry. "A grand. Right now. Or I stop looking the other way."',
+    },
+    body_max: {
+      ru: 'Коллинз ставит папку на стол. «$1000. Или ваш клуб закрывается в пятницу. Это не шантаж — это счёт за услуги». Улыбается.',
+      en: 'Collins slaps a folder on the desk. "$1000. Or your club closes Friday. This isn\'t blackmail — it\'s a service invoice." He smiles.',
+    },
+    choices: [
+      { key: 'pay',    label: { ru: 'ЗАПЛАТИТЬ $1000', en: 'PAY $1000'   } },
+      { key: 'refuse', label: { ru: 'ОТКАЗАТЬ',         en: 'REFUSE'      } },
+    ],
+    resolve(choice, GameState) {
+      if (choice === 'pay') {
+        const total = 1000;
+        const fromVelvet = Math.min(total, GameState.nightEarnings);
+        const remaining  = total - fromVelvet;
+        if (fromVelvet + GameState.stash >= total) {
+          GameState.nightEarnings  -= fromVelvet;
+          GameState.stash      -= remaining;
+          GameState.fbiSuspicion = Math.max(0, GameState.fbiSuspicion - 30);
+          GameState.policeHeat   = Math.max(0, GameState.policeHeat   - 35);
+          GameState.characterMemory.collins.bribeCount += 1;
+          return { ok: true, msg: '-$1000 → FBI -30% Police -35%' };
+        }
+        return { ok: false, msg: 'NOT ENOUGH CASH!' };
+      }
+      GameState.characterMemory.collins.refusedCount += 1;
+      if (GameState.characterMemory.collins.refusedCount >= 2) {
+        GameState.characterMemory.collins.hostile = true;
+      }
+      GameState.fbiSuspicion = Math.min(100, GameState.fbiSuspicion + 20);
+      GameState.policeHeat   = Math.min(100, GameState.policeHeat   + 20);
+      return { ok: false, msg: 'Collins angry! FBI +20% Heat +20%' };
+    },
+  },
+
+  {
     id: 'irs_audit_letter',
     unlockNight: 3,
     chance: 0.09,
