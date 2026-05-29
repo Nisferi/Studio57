@@ -34,9 +34,12 @@ export class BootScene extends Phaser.Scene {
     if (bar) bar.style.width = '100%';
 
     // Short delay for loading screen visibility
-    this.time.delayedCall(400, () => {
+    this.time.delayedCall(300, () => {
       const loadingEl = document.getElementById('loading-screen');
-      if (loadingEl) loadingEl.style.display = 'none';
+      if (loadingEl) {
+        loadingEl.style.opacity = '0';
+        setTimeout(() => { loadingEl.style.display = 'none'; }, 420);
+      }
 
       if (!hasSave || !GameState.contentVersion) {
         this.scene.start('VersionSelect');

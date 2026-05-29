@@ -7,36 +7,66 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <title>Studio 57 — Velvet &amp; Stash</title>
 
-  <!-- Telegram Mini App SDK -->
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <!-- Telegram Mini App SDK — async so it never blocks the game -->
+  <script src="https://telegram.org/js/telegram-web-app.js" async></script>
 
-  <!-- Pixel font -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <!-- Pixel font — non-blocking (font-display:swap in @font-face) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+  <link rel="preload" as="style"
+    href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+    onload="this.rel='stylesheet'" />
+  <noscript>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+  </noscript>
 
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
       width: 100%; height: 100%;
-      background: #020008;
+      background: #0a0838;
       overflow: hidden;
       touch-action: none;
     }
-    canvas { display: block; margin: 0 auto; }
+    canvas { display: block; margin: 0 auto; touch-action: none; }
+
     #loading-screen {
       position: fixed; inset: 0;
-      background: #020008;
+      background: linear-gradient(180deg, #14094e 0%, #2c1890 60%, #4826cc 100%);
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
       color: #ffd700;
-      font-family: 'Press Start 2P', monospace;
+      font-family: 'Press Start 2P', monospace, sans-serif;
       font-size: 10px;
-      gap: 20px;
+      gap: 18px;
       z-index: 9999;
+      transition: opacity 0.4s;
     }
-    #loading-screen h1 { font-size: 22px; color: #ff00a0; text-shadow: 0 0 20px #ff00a0; }
-    #loading-bar-wrap { width: 200px; height: 12px; border: 2px solid #ffd700; }
-    #loading-bar { width: 0%; height: 100%; background: #ffd700; transition: width 0.2s; }
+    #loading-screen h1 {
+      font-size: 20px; color: #ff00cc;
+      text-shadow: 0 0 12px #ff00cc, 0 0 30px #ff00cc88;
+      letter-spacing: 2px;
+    }
+    #loading-screen p { color: #aa88ff; font-size: 8px; }
+    #loading-bar-wrap {
+      width: 220px; height: 10px;
+      border: 2px solid #ffd700;
+      box-shadow: 0 0 8px #ffd70066;
+    }
+    #loading-bar {
+      width: 0%; height: 100%;
+      background: linear-gradient(90deg, #ffd700, #ffaa00);
+      transition: width 0.3s ease;
+    }
+    #loading-tip { color: #7766aa; font-size: 7px; }
+
+    /* Error overlay (shown if JS crashes) */
+    #error-overlay {
+      display: none; position: fixed; inset: 0;
+      background: #200000ee; color: #ff4444;
+      font-family: monospace; font-size: 13px;
+      padding: 20px; z-index: 99999;
+      white-space: pre-wrap; overflow: auto;
+    }
   </style>
 </head>
 <body>
@@ -44,8 +74,24 @@
     <h1>STUDIO 57</h1>
     <p>NEW YORK · 1977</p>
     <div id="loading-bar-wrap"><div id="loading-bar"></div></div>
-    <p id="loading-tip">Loading...</p>
+    <p id="loading-tip">Loading…</p>
   </div>
+  <div id="error-overlay"></div>
+
+  <!-- Global error catcher — shows crash info on screen (useful on mobile) -->
+  <script>
+    window.addEventListener('error', function(e) {
+      var el = document.getElementById('error-overlay');
+      el.style.display = 'block';
+      el.textContent = 'CRASH: ' + e.message + '\n' + e.filename + ':' + e.lineno + '\n\n' + (e.error && e.error.stack ? e.error.stack : '');
+    });
+    window.addEventListener('unhandledrejection', function(e) {
+      var el = document.getElementById('error-overlay');
+      el.style.display = 'block';
+      el.textContent = 'PROMISE CRASH:\n' + (e.reason ? (e.reason.stack || e.reason) : 'unknown');
+    });
+  </script>
+
   <script type="module" src="/src/main.js"></script>
 </body>
 </html>
