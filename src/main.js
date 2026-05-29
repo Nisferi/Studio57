@@ -9,6 +9,7 @@ import { EventsScene }        from './scenes/EventsScene.js';
 import { EventPopupScene }    from './scenes/EventPopupScene.js';
 import { EndNightScene }      from './scenes/EndNightScene.js';
 import { OfficeScene }        from './scenes/OfficeScene.js';
+import { BathroomScene }      from './scenes/BathroomScene.js';
 import { GameOverScene }      from './scenes/GameOverScene.js';
 
 window.__studio57Lang = 'ru';
@@ -33,6 +34,7 @@ const config = {
     ClubScene,
     EventsScene,
     EventPopupScene,
+    BathroomScene,
     EndNightScene,
     OfficeScene,
     GameOverScene,
